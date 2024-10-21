@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  --tw-bg-opacity: 1;
+  background-color: rgb(229 231 235 / var(--tw-bg-opacity));
+}
+
+/* Override Ant Design selected menu item */
+.ant-menu-item-selected {
+  @apply bg-gray-300 text-black font-semibold !important;
+}
+
+/* Optional: Override hover styles for menu items */
+.ant-menu-item:hover {
+  @apply bg-gray-100 text-gray-700 !important;
+}
+
+.scrollbar-rounded::-webkit-scrollbar {
+  width: 9px;
+}
+
+.scrollbar-rounded::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.scrollbar-rounded::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  border: 2px solid #f1f1f1;
+}
+
+.scrollbar-rounded::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

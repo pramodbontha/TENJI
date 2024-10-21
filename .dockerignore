@@ -1,0 +1,44 @@
+# For the Node.js app in the 'api/' directory
+api/node_modules
+api/npm-debug.log
+api/yarn-error.log
+api/.env
+api/.env.local
+api/.env.*.local
+api/.DS_Store
+api/*.log
+api/logs
+api/.vscode/
+api/.idea/
+api/*.swp
+api/tests/
+api/__tests__/
+api/*.test.js
+api/*.spec.js
+api/*.tmp
+api/*.bak
+api/tmp/
+
+# For the Vite frontend in the 'client/' directory
+client/node_modules
+client/.env
+client/.env.local
+client/.env.*.local
+client/.DS_Store
+client/dist/
+client/build/
+client/*.log
+client/.vscode/
+client/.idea/
+client/*.swp
+
+# Ignore Docker-related files in root
+docker-compose.yml
+.dockerignore
+
+# Ignore general files and directories in the root
+.DS_Store
+*.log
+*.swp
+*.tmp
+*.bak

@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    ports:
+      - "7474:7474"  # HTTP access
+      - "7687:7687"  # Bolt protocol access
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH}  # Set the default password for the Neo4j database
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "huhontow", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - tenji
+  
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - tenji
+    
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    environment:
+      - NEO4J_URL=${NEO4J_URL}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - PORT=${PORT}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: npm run start:dev
+    networks:
+      - tenji
+
+  lemmatizer:
+    build:
+      context: ./lemmatizer-app  # Path to the lemmatizer Dockerfile
+    container_name: lemmatizer
+    ports:
+      - "5000:5000"  # Exposing port 5000
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    restart: always
+    networks:
+      - tenji
+  
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    ports:
+      - "5173:5173"
+    depends_on: 
+      - api
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev -- --host
+    networks:
+      - tenji
+
+
+networks:
+  tenji:
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  esdata:
