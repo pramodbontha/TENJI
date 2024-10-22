@@ -3,4 +3,4 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_URL = "http://63.176.36.189/"
+  VITE_API_URL = "https://63.176.36.189/"
