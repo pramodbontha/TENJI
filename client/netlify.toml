@@ -3,4 +3,10 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_URL = "/api"
+  VITE_API_URL = "/"
+
+[[redirects]]
+  from = "/*"
+  to = "http://63.176.36.189:3000/:splat"
+  status = 200
+  force = true
