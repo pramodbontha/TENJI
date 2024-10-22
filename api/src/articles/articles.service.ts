@@ -43,7 +43,7 @@ export class ArticlesService implements OnModuleInit {
       const query = `
       MATCH (a:Article) 
       OPTIONAL MATCH (a:Article)-[:IS_NAMED]->(n:Name)
-      RETURN a, n.short AS articleName
+      RETURN id(a) as articleId, a, n.short AS articleName
     `;
 
       const result = await this.neo4jService.runQuery(query);
@@ -51,6 +51,7 @@ export class ArticlesService implements OnModuleInit {
       const articles = [];
 
       for (const record of result) {
+        const articleId = record.get('articleId');
         const articleData = record.get('a').properties;
         const articleName = record.get('articleName');
 
@@ -68,12 +69,23 @@ export class ArticlesService implements OnModuleInit {
         // Index the articles in Elasticsearch
         await this.elasticsearchService.index({
           index: 'articles',
-          id: articleData.number, // Assuming "number" is a unique identifier
+          id: articleId, // Assuming "number" is a unique identifier
           body: articleToIndex,
         });
       }
 
       this.logger.log(`Indexed ${articles.length} articles`);
+
+      this.logger.log('Lemmatizing articles');
+      await this.lemmatizeArticles();
+    }
+  }
+
+  private async lemmatizeArticles() {
+    try {
+      await axios.get('http://lemmatizer:5000/lemmatize-articles');
+    } catch (error) {
+      this.logger.error('Failed to lemmatize articles', error.stack);
     }
   }
 
@@ -93,7 +105,14 @@ export class ArticlesService implements OnModuleInit {
               number: { type: 'text' },
               text: { type: 'text' },
               citing_cases: { type: 'integer' },
-              articleName: { type: 'text' },
+              articleName: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              },
+              name_lemma: { type: 'text' }, // Lemmatized field
+              text_lemma: { type: 'text' }, // Lemmatized field
             },
           },
         },
@@ -105,36 +124,60 @@ export class ArticlesService implements OnModuleInit {
   }
 
   async searchArticles(filter: FilterArticlesQueryDto) {
-    // Trim and lowercase the search term
-    const trimmedSearchTerm = filter.searchTerm?.trim().toLowerCase();
+    // Trim the search term
+    const trimmedSearchTerm = filter.searchTerm?.trim();
 
     // Extract the part of the search term that matches the number pattern
     const extractedSearchTerm = trimmedSearchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
 
+    const searchFields = [];
+
     const query: any = {
       bool: {
         must: [],
-        filter: [],
       },
     };
 
-    // First pass: Search for extractedSearchTerm in the number field
-    if (extractedSearchTerm) {
+    // First, prioritize searching by name fields
+    if (filter.name || (!filter.name && !filter.text && !extractedSearchTerm)) {
+      // If `name` filter is provided or no filters are selected, search by name-related fields
+      searchFields.push('articleName', 'name_lemma', 'articleName.keyword');
+      if (trimmedSearchTerm) {
+        const lemmatizedSearchTerm =
+          await this.lemmatizeText(trimmedSearchTerm);
+        console.log('Lemmatized search term:', lemmatizedSearchTerm);
+
+        query.bool.must.push({
+          multi_match: {
+            query: lemmatizedSearchTerm || trimmedSearchTerm,
+            fields: searchFields,
+            fuzziness: 'AUTO',
+            minimum_should_match: '70%',
+          },
+        });
+      }
+    }
+
+    // Next, if a number-related search term is found and no name fields are searched
+    if (extractedSearchTerm && !filter.name && !filter.text) {
       query.bool.must.push({
-        match: { number: extractedSearchTerm },
+        match: { number: { query: extractedSearchTerm, fuzziness: 'AUTO' } },
       });
     }
 
-    // Second pass: Search for otherSearchTerm in articleName and text fields
-    if (trimmedSearchTerm) {
-      const lemmatizedSearchTerm = await this.lemmatizeText(trimmedSearchTerm);
-      query.bool.must.push({
-        multi_match: {
-          query: lemmatizedSearchTerm,
-          fields: ['articleName', 'text'],
-          fuzziness: 'AUTO',
-        },
-      });
+    // If `text` filter is selected, add text fields for searching
+    if (filter.text) {
+      searchFields.push('text', 'text_lemma');
+      if (trimmedSearchTerm) {
+        query.bool.must.push({
+          multi_match: {
+            query: trimmedSearchTerm,
+            fields: searchFields,
+            fuzziness: 'AUTO',
+            minimum_should_match: '70%',
+          },
+        });
+      }
     }
 
     // Apply sorting (e.g., by citing_cases in descending order)
