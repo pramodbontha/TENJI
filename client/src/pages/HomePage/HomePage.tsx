@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setQuery } from "@/slices/SearchBarSlice";
 import { Spin, Tour, TourProps } from "antd";
 import { useState } from "react";
-import { ModalSpinner } from "@/components";
 
 const HomePage = () => {
   const dispatch = useAppDispatch();
@@ -38,7 +37,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#first-element"), // CSS selector of the target element
+      target: () => document.querySelector("#first-element") as HTMLElement, // CSS selector of the target element
     },
     {
       title: "",
@@ -56,7 +55,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#second-element"),
+      target: () => document.querySelector("#second-element") as HTMLElement,
     },
     {
       title: "",
@@ -76,7 +75,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#third-element"),
+      target: () => document.querySelector("#third-element") as HTMLElement,
     },
     {
       title: "",
@@ -93,7 +92,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#fourth-element"),
+      target: () => document.querySelector("#fourth-element") as HTMLElement,
     },
     {
       title: "",
@@ -113,7 +112,8 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#recommended-articles"),
+      target: () =>
+        document.querySelector("#recommended-articles") as HTMLElement,
     },
     {
       title: "",
@@ -133,7 +133,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#recommended-cases"),
+      target: () => document.querySelector("#recommended-cases") as HTMLElement,
     },
     {
       title: "",
@@ -153,7 +153,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#recommended-books"),
+      target: () => document.querySelector("#recommended-books") as HTMLElement,
     },
     {
       title: "",
@@ -170,7 +170,7 @@ const HomePage = () => {
           </div>
         </>
       ),
-      target: () => document.querySelector("#language-selector"),
+      target: () => document.querySelector("#language-selector") as HTMLElement,
     },
   ];
   return (
