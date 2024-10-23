@@ -66,14 +66,14 @@ def lemmatize_and_update_articles():
         }
     }
     
-    cases = es.search(index='articles', body=es_query)
+    articles = es.search(index='articles', body=es_query)
 
-    for case in cases['hits']['hits']:
-        lemmatized_name = lemmatize_text_es(case["_source"]["articleName"])
-        lemmatized_text = lemmatize_text_es(case["_source"]["text"])
+    for article in articles['hits']['hits']:
+        lemmatized_name = lemmatize_text_es(article["_source"]["name"])
+        lemmatized_text = lemmatize_text_es(article["_source"]["text"])
 
         # Update the document in Elasticsearch with lemmatized fields
-        es.update(index='articles', id=case["_id"], body={
+        es.update(index='articles', id=article["_id"], body={
             "doc": {
                 "name_lemma": lemmatized_name,
                 "text_lemma": lemmatized_text,

@@ -38,8 +38,6 @@ const CitedByCase = (props: CitedByCaseProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -70,10 +68,11 @@ const CitedByCase = (props: CitedByCaseProps) => {
         caseId: `${caseId}`,
         searchTerm,
         skip: 0,
-        limit: pageSize,
+        limit: 10,
       });
 
       citedByCases && dispatch(setCitedByCases(citedByCases));
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
     }

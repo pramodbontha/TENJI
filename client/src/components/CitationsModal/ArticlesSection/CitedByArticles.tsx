@@ -39,8 +39,6 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -76,6 +74,7 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
           limit: 10,
         });
         citedByArticles && dispatch(setCitedByArticles(citedByArticles));
+        setCurrentPage(1);
       } catch (error) {
         console.error(error);
       }
@@ -108,6 +107,15 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
               onChange={onSearchInputChange}
             />
           </div>
+          {citedByArticles.total < citedByArticlesCount && (
+            <div>
+              <div className=" mt-2 ml-2">
+                {`${t("found")} ${citedByArticles.total} ${t("articles")} ${t(
+                  "of"
+                )} ${citedByArticlesCount}`}
+              </div>
+            </div>
+          )}
         </div>
         <div>
           {citedByArticlesCount > 0 && (
@@ -116,7 +124,7 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
                 showSizeChanger
                 current={currentPage}
                 pageSize={pageSize}
-                total={citedByArticlesCount}
+                total={citedByArticles.total}
                 onChange={onChange}
               />
             </div>

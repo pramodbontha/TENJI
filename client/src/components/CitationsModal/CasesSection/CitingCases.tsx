@@ -40,8 +40,6 @@ const CitingCases = (props: CitingCasesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -76,6 +74,7 @@ const CitingCases = (props: CitingCasesProps) => {
       });
 
       citingCases && dispatch(setCitingCases(citingCases));
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
     }

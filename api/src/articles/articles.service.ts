@@ -61,7 +61,7 @@ export class ArticlesService implements OnModuleInit {
         const articleToIndex = {
           ...articleData,
           citing_cases: articleData.citing_cases.low, // Convert Neo4j Integer to number
-          articleName, // Store original article name and other fields
+          name: articleName, // Store original article name and other fields
         };
 
         articles.push(articleToIndex);
@@ -105,7 +105,7 @@ export class ArticlesService implements OnModuleInit {
               number: { type: 'text' },
               text: { type: 'text' },
               citing_cases: { type: 'integer' },
-              articleName: {
+              name: {
                 type: 'text',
                 fields: {
                   keyword: { type: 'keyword' }, // For exact matching
@@ -141,7 +141,7 @@ export class ArticlesService implements OnModuleInit {
     // First, prioritize searching by name fields
     if (filter.name || (!filter.name && !filter.text && !extractedSearchTerm)) {
       // If `name` filter is provided or no filters are selected, search by name-related fields
-      searchFields.push('articleName', 'name_lemma', 'articleName.keyword');
+      searchFields.push('name', 'name_lemma', 'name.keyword');
       if (trimmedSearchTerm) {
         const lemmatizedSearchTerm =
           await this.lemmatizeText(trimmedSearchTerm);
@@ -195,6 +195,9 @@ export class ArticlesService implements OnModuleInit {
       body: {
         query,
         sort,
+        _source: {
+          excludes: ['name_lemma', 'text_lemma'], // Exclude these fields from the response
+        },
       },
       from,
       size,

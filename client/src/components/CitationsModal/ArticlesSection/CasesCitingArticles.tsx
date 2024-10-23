@@ -40,8 +40,6 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -75,6 +73,7 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
       });
 
       cases && dispatch(setCasesCitingArticle(cases));
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
     }
@@ -106,6 +105,15 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
               onChange={onSearchInputChange}
             />
           </div>
+          {casesCitingArticle.total < casesCitingArticleCount && (
+            <div>
+              <div className=" mt-2 ml-2">
+                {`${t("found")} ${casesCitingArticle.total} ${t("cases")} ${t(
+                  "of"
+                )} ${casesCitingArticleCount}`}
+              </div>
+            </div>
+          )}
         </div>
         <div>
           {casesCitingArticleCount > 0 && (
@@ -114,7 +122,7 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
                 showSizeChanger
                 current={currentPage}
                 pageSize={pageSize}
-                total={casesCitingArticleCount}
+                total={casesCitingArticle.total}
                 onChange={onChange}
               />
             </div>
@@ -145,14 +153,16 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
                     {cases.caseName && (
                       <>
                         <div className="font-bold mr-2">{t("name")}:</div>
-                        <div className="line-clamp-1">{cases.caseName}</div>
+                        <div className="line-clamp-1 mr-4">
+                          {cases.caseName}
+                        </div>
                       </>
                     )}
-                    <div className="ml-4">
+                    <div className="mr-4">
                       <span className="font-semibold">{t("year")}:</span>
                       <span>{cases.year}</span>
                     </div>
-                    <div className="ml-4">
+                    <div>
                       <span className="font-semibold">{t("type")}: </span>
                       <span>{cases.decision_type}</span>
                     </div>

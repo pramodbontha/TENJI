@@ -44,8 +44,6 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -81,6 +79,7 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
       });
 
       articles && dispatch(setArticlesCitingCases(articles));
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
     }
@@ -112,6 +111,15 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
               onChange={onSearchInputChange}
             />
           </div>
+          {articlesCitingCases.total < articlesCitingCasesCount && (
+            <div>
+              <div className=" mt-2 ml-2">
+                {`${t("found")} ${articlesCitingCases.total} ${t(
+                  "articles"
+                )} ${t("of")} ${articlesCitingCasesCount}`}
+              </div>
+            </div>
+          )}
         </div>
         <div>
           {articlesCitingCasesCount > 0 && (
@@ -120,7 +128,7 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
                 showSizeChanger
                 current={currentPage}
                 pageSize={pageSize}
-                total={articlesCitingCasesCount}
+                total={articlesCitingCases.total}
                 onChange={onChange}
               />
             </div>

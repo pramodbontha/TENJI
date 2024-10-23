@@ -38,8 +38,6 @@ const CaseReferences = (props: CaseReferenceProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-    setPageSize(10);
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -105,6 +103,15 @@ const CaseReferences = (props: CaseReferenceProps) => {
               onChange={onSearchInputChange}
             />
           </div>
+          {caseReferences.total < caseReferencesCount && (
+            <div>
+              <div className=" mt-2 ml-2">
+                {`${t("found")} ${caseReferences.total} ${t("references")} ${t(
+                  "of"
+                )} ${caseReferencesCount}`}
+              </div>
+            </div>
+          )}
         </div>
         <div>
           {caseReferencesCount > 0 && (
@@ -113,7 +120,7 @@ const CaseReferences = (props: CaseReferenceProps) => {
                 showSizeChanger
                 current={currentPage}
                 pageSize={pageSize}
-                total={caseReferencesCount}
+                total={caseReferences.total}
                 onChange={onChange}
               />
             </div>

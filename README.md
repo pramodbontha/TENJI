@@ -5,7 +5,7 @@
 ![Neo4j](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
 ![Elasticsearch](https://img.shields.io/badge/Elasticsearch-005571?style=for-the-badge&logo=elasticsearch&logoColor=white)
 
-**TENJI** (Textbook Entity Network and Jurisprudence Interface) is a search engine specifically designed to navigate and retrieve legal data from German law texts. It uses a combination of **React (Vite)** for the frontend, **NestJS** for the backend API, **Neo4j** as a graph database to store legal relationships, and **Elasticsearch** to index and perform searches on legal documents. Additionally, a **lemmatizer** service is integrated for linguistic processing.
+**TENJI** (Textbook Entity Network and Jurisprudence Interface) is a search engine specifically designed to navigate and retrieve legal data from German law texts and textbooks. It uses a combination of **React (Vite)** for the frontend, **NestJS** for the backend API, **Neo4j** as a graph database to store legal relationships, and **Elasticsearch** to index and perform searches on legal documents. Additionally, a **lemmatizer** service is integrated for linguistic processing.
 
 ## Prerequisites
 
