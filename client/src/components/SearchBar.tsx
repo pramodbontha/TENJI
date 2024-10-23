@@ -78,6 +78,7 @@ const SearchBar = () => {
 
   const handleSearch = async () => {
     try {
+      dispatch(setQuery(searchTerm));
       const articleFilter = {
         searchTerm,
         name: values.articleName,
@@ -124,7 +125,6 @@ const SearchBar = () => {
       filteredCases && dispatch(setCases(filteredCases.cases));
       filteredReferences &&
         dispatch(setReferences(filteredReferences.references));
-      dispatch(setQuery(searchTerm));
       filteredArticles &&
         filteredArticles.total !== undefined &&
         dispatch(setArticleCount(filteredArticles.total));
@@ -150,6 +150,7 @@ const SearchBar = () => {
   };
 
   const navigateToHomePage = () => {
+    dispatch(setQuery(""));
     setSearchTerm("");
     navigate("/");
   };

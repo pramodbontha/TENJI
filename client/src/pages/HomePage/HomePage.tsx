@@ -1,14 +1,11 @@
 import Case from "./Case";
 import Article from "./Article";
 import Book from "./Book";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { setQuery } from "@/slices/SearchBarSlice";
+import { useAppSelector } from "@/redux/hooks";
 import { Spin, Tour, TourProps } from "antd";
 import { useState } from "react";
 
 const HomePage = () => {
-  const dispatch = useAppDispatch();
-  dispatch(setQuery(""));
   const [isTourOpen, setIsTourOpen] = useState(true);
   const { isArticleLoading } = useAppSelector((state) => state.articles);
 
