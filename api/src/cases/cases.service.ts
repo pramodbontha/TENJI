@@ -124,11 +124,12 @@ export class CasesService implements OnModuleInit {
   }
 
   async searchCasesByNumber(caseNumber: string, skip = 0, limit = 10) {
+    const normalizedCaseNumber = this.normalizeCaseNumber(caseNumber);
     const result = await this.elasticsearchService.search({
       index: 'cases',
       body: {
         query: {
-          match: { number: caseNumber },
+          match: { number: normalizedCaseNumber },
         },
         from: skip,
         size: limit,
@@ -138,6 +139,28 @@ export class CasesService implements OnModuleInit {
       cases: result.hits.hits.map((hit) => hit._source),
       total: result.hits.total['value'],
     };
+  }
+
+  // Utility function to normalize the case number format
+  private normalizeCaseNumber(caseNumber: string): string {
+    // Regular expression to detect if "BVerfGE" is present at the end or beginning
+    const caseNumberPattern =
+      /^(BVerfGE\s*\d+\s*,\s*\d+)|(\d+\s*,\s*\d+\s*BVerfGE)$/i;
+
+    // Check if the input matches either "BVerfGE digits, digits" or "digits, digits BVerfGE"
+    const match = caseNumber.match(caseNumberPattern);
+
+    if (match) {
+      // Ensure "BVerfGE" is always at the beginning, and strip extra spaces
+      const numberOnly = caseNumber
+        .replace(/BVerfGE/i, '')
+        .trim()
+        .replace(/\s*,\s*/, ',');
+      return `BVerfGE${numberOnly}`;
+    }
+
+    // If the input doesn't match the expected pattern, return it as-is
+    return caseNumber;
   }
 
   async searchCases(filter: FilterCasesQueryDto) {
