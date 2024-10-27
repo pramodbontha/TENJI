@@ -123,16 +123,21 @@ export class CasesService implements OnModuleInit {
     }
   }
 
-  async searchCasesByNumber(caseNumber: string) {
+  async searchCasesByNumber(caseNumber: string, skip = 0, limit = 10) {
     const result = await this.elasticsearchService.search({
       index: 'cases',
       body: {
         query: {
           match: { number: caseNumber },
         },
+        from: skip,
+        size: limit,
       },
     });
-    return result.hits.hits.map((hit) => hit._source);
+    return {
+      cases: result.hits.hits.map((hit) => hit._source),
+      total: result.hits.total['value'],
+    };
   }
 
   async searchCases(filter: FilterCasesQueryDto) {

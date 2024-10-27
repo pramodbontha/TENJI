@@ -33,12 +33,17 @@ export class CasesController {
   public async fetchFilteredCases(@Query() filterDto: FilterCasesQueryDto) {
     try {
       // Use a case-insensitive regex pattern to determine if the query matches the case number format
-      const caseNumberPattern = /^\d+\s*,?\s*\d+\s*BVerfGE$/i; // The 'i' flag makes it case-insensitive
+      const caseNumberPattern =
+        /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i; // The 'i' flag makes it case-insensitive
       const searchTerm = filterDto.searchTerm || ''; // Use searchTerm from DTO
 
       if (caseNumberPattern.test(searchTerm)) {
         // If query matches case number format, search by case number
-        const cases = await this.casesService.searchCasesByNumber(searchTerm);
+        const cases = await this.casesService.searchCasesByNumber(
+          searchTerm,
+          filterDto.skip,
+          filterDto.limit,
+        );
         return cases; // Indicate type of search in response
       } else {
         // Otherwise, perform a lemmatized search
