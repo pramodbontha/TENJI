@@ -127,10 +127,9 @@ export class ArticlesService implements OnModuleInit {
     // Trim the search term
     const trimmedSearchTerm = filter.searchTerm?.trim();
 
-    // Extract the part of the search term that matches the number pattern
-    const extractedSearchTerm = trimmedSearchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
-
-    const searchFields = [];
+    // Regex to identify article numbers (not in brackets, allowing optional whitespace and abbreviations)
+    const articleNumberPattern =
+      /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
 
     const query: any = {
       bool: {
@@ -138,10 +137,18 @@ export class ArticlesService implements OnModuleInit {
       },
     };
 
-    // First, prioritize searching by name fields
-    if (filter.name || (!filter.name && !filter.text && !extractedSearchTerm)) {
-      // If `name` filter is provided or no filters are selected, search by name-related fields
-      searchFields.push('name', 'name_lemma', 'name.keyword');
+    // Check if the search term matches the article number pattern
+    if (trimmedSearchTerm && articleNumberPattern.test(trimmedSearchTerm)) {
+      query.bool.must.push({
+        match: {
+          number: {
+            query: trimmedSearchTerm.replace(/\s+/g, ' ').trim(), // Normalize whitespace
+            fuzziness: 'AUTO',
+          },
+        },
+      });
+    } else {
+      // If not an article number, perform lemmatized search
       if (trimmedSearchTerm) {
         const lemmatizedSearchTerm =
           await this.lemmatizeText(trimmedSearchTerm);
@@ -150,29 +157,13 @@ export class ArticlesService implements OnModuleInit {
         query.bool.must.push({
           multi_match: {
             query: lemmatizedSearchTerm || trimmedSearchTerm,
-            fields: searchFields,
-            fuzziness: 'AUTO',
-            minimum_should_match: '70%',
-          },
-        });
-      }
-    }
-
-    // Next, if a number-related search term is found and no name fields are searched
-    if (extractedSearchTerm && !filter.name && !filter.text) {
-      query.bool.must.push({
-        match: { number: { query: extractedSearchTerm, fuzziness: 'AUTO' } },
-      });
-    }
-
-    // If `text` filter is selected, add text fields for searching
-    if (filter.text) {
-      searchFields.push('text', 'text_lemma');
-      if (trimmedSearchTerm) {
-        query.bool.must.push({
-          multi_match: {
-            query: trimmedSearchTerm,
-            fields: searchFields,
+            fields: [
+              'name',
+              'name_lemma',
+              'name.keyword',
+              'text',
+              'text_lemma',
+            ],
             fuzziness: 'AUTO',
             minimum_should_match: '70%',
           },
@@ -276,69 +267,35 @@ export class ArticlesService implements OnModuleInit {
     let query = name
       ? 'MATCH (a:Article)-[:IS_NAMED]->(n:Name) '
       : 'MATCH (a:Article) ';
-    const conditions: string[] = [];
-
-    if (!trimmedSearchTerm && !name && !number && !text) {
-      if (isCountQuery) {
-        return { query: `${query} RETURN COUNT(a) AS count`, params: {} };
-      }
-      if (!name) {
-        query += 'OPTIONAL MATCH (a)-[:IS_NAMED]->(n:Name) ';
-      }
-      return {
-        query: `${query} RETURN a, n.short AS name, elementId(a) AS elementId ORDER BY a.citing_cases DESC SKIP $skip LIMIT $limit`,
-        params: { skip, limit },
-      };
-    }
-
-    if (trimmedSearchTerm && !name && !number && !text) {
-      conditions.push(
-        `a.number CONTAINS $extractedSearchTerm OR toLower(a.text) CONTAINS $trimmedSearchTerm`,
-      );
-    }
-
-    if (number) {
-      conditions.push(
-        extractedSearchTerm
-          ? `a.number CONTAINS $extractedSearchTerm`
-          : `a.number CONTAINS $trimmedSearchTerm`,
-      );
-    }
-
-    if (text) {
-      conditions.push(`toLower(a.text) CONTAINS $trimmedSearchTerm`);
-    }
-
-    if (conditions.length > 0) {
-      query += `WHERE ${conditions.join(' OR ')} `;
-    }
-
-    if (!name) {
-      query += 'OPTIONAL MATCH (a)-[:IS_NAMED]->(n:Name) ';
-    }
-
-    if (name && trimmedSearchTerm) {
-      query +=
-        conditions.length === 0
-          ? `WHERE toLower(n.short) CONTAINS $trimmedSearchTerm `
-          : `OR toLower(n.short) CONTAINS $trimmedSearchTerm `;
-    }
 
     if (isCountQuery) {
-      query += 'RETURN COUNT(a) AS count';
+      query += 'RETURN count(a) AS count';
     } else {
-      query +=
-        'RETURN a, n.short AS name, elementId(a) AS elementId SKIP $skip LIMIT $limit';
+      query += 'RETURN a, n.short AS name';
+      if (limit > 0) {
+        query += ` SKIP ${skip} LIMIT ${limit}`;
+      }
     }
 
-    return {
-      query,
-      params: {
-        searchTerm: trimmedSearchTerm,
-        skip,
-        limit,
-        extractedSearchTerm,
-      },
-    };
+    const params: Record<string, any> = {};
+
+    // Build additional filtering conditions
+    if (name) {
+      query += ' WHERE n.short = $name';
+      params.name = name;
+    }
+    if (number) {
+      query += ' AND a.number = $number';
+      params.number = number;
+    }
+    if (text) {
+      query += ' AND a.text CONTAINS $text';
+      params.text = text;
+    }
+    if (trimmedSearchTerm) {
+      query += ` AND (toLower(a.number) = "${extractedSearchTerm}" OR toLower(n.short) CONTAINS $searchTerm OR toLower(a.text) CONTAINS $searchTerm)`;
+    }
+
+    return { query, params };
   }
 }
