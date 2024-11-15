@@ -42,13 +42,32 @@ const HomePage = () => {
         <>
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">DE:</div>
-            {
-              "Verwenden Sie diese Suchleiste, um nach Artikeln, Fällen usw. zu suchen"
-            }
+            <div>
+              <p>
+                Verwenden Sie diese Suchleiste, um nach Artikeln, Fällen usw. zu
+                suchen
+              </p>
+              <p>Beispiel-Suchbegriffe:</p>
+              <ul className="list-disc ml-5">
+                <li>"Nassauskiesung" für einen Fallnamen</li>
+                <li>"BVerfFE 58, 300" für eine Fallnummer</li>
+                <li>"Erbrect" für einen Artikelnamen</li>
+                <li>"Art. 14 GG" für eine Artikelnummer</li>
+              </ul>
+            </div>
           </div>
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">EN:</div>
-            {"Use this search bar to search for articles, cases, etc."}
+            <div>
+              <p>Use this search bar to search for articles, cases, etc.</p>
+              <p>Example search terms:</p>
+              <ul className="list-disc ml-5">
+                <li>"Nassauskiesung" for a case name</li>
+                <li>"BVerfFE 58, 300" for a case number</li>
+                <li>"Erbrect" for an article name</li>
+                <li>"Art. 14 GG" for an article number</li>
+              </ul>
+            </div>
           </div>
         </>
       ),
