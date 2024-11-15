@@ -1,17 +1,9 @@
+import { ArticleCard } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useLazyGetArticlesCitingCaseQuery } from "@/services/CitationsApi";
 import { setArticlesCitingCases } from "@/slices/ArticleSlice";
 import { Article, CitationsArticles } from "@/types";
-import {
-  Row,
-  Col,
-  Card,
-  Space,
-  Button,
-  Pagination,
-  PaginationProps,
-  Input,
-} from "antd";
+import { Row, Col, Pagination, PaginationProps, Input } from "antd";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -141,30 +133,14 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
             articlesCitingCases.articles?.length !== 0 &&
             articlesCitingCases.articles?.map((article) => (
               <Col key={article.id} span={24}>
-                <Card
-                  title={`${t("article-number")}: ${article.number}`}
-                  extra={
-                    <Space>
-                      <Button onClick={() => addArticleCitations(article)}>
-                        {t("citations")}
-                      </Button>
-                      <Button onClick={() => openArticleModal(article)}>
-                        {t("more")}
-                      </Button>
-                    </Space>
-                  }
-                  className="h-44 drop-shadow-md"
-                >
-                  {article.name && (
-                    <div className="flex line-clamp-1">
-                      <div className="font-bold mr-2">{t("name")}:</div>
-                      <div className="line-clamp-1 ">{article.name}</div>
-                    </div>
-                  )}
-                  <div className="flex">
-                    <div className="line-clamp-3">{article.text}</div>
-                  </div>
-                </Card>
+                <ArticleCard
+                  key={"aritcles-citing-cases" + article.id}
+                  article={article}
+                  isSearchResult={true}
+                  searchTerm={searchTerm}
+                  openArticleModal={openArticleModal}
+                  openCitationModal={addArticleCitations}
+                />
               </Col>
             ))}
         </Row>

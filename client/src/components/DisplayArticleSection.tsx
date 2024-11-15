@@ -1,23 +1,19 @@
-import { ICase } from "@/types";
+import { Article } from "@/types";
 import { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 
-const DisplayCaseSection = ({
-  selectedCase,
-  searchTerm,
-}: {
-  selectedCase: ICase;
-  searchTerm?: string;
-}) => {
+interface DisplayArticleSectionProps {
+  selectedArticle: Article;
+  searchTerm: string;
+  openArticleModal: (article: Article) => void;
+}
+
+const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
+  const { selectedArticle, searchTerm, openArticleModal } = props;
   const [adjustedText, setAdjustedText] = useState("");
+  const articleProperties = [{ title: "text", text: selectedArticle.text }];
   const { t } = useTranslation();
-  const caseProperties = [
-    { title: t("judgement"), text: selectedCase.judgment },
-    { title: t("facts"), text: selectedCase.facts },
-    { title: t("reasoning"), text: selectedCase.reasoning },
-    { title: t("headnotes"), text: selectedCase.headnotes },
-  ];
 
   const includesQuery = (text: string | undefined) =>
     text &&
@@ -25,19 +21,23 @@ const DisplayCaseSection = ({
     searchTerm &&
     text.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const sectionWithQuery = caseProperties.find(({ text }) =>
+  const sectionWithQuery = articleProperties.find(({ text }) =>
     includesQuery(text)
   );
 
-  const sectionWithText = caseProperties.find(
+  const sectionWithText = articleProperties.find(
     ({ text }) => text && text.trim() !== ""
   );
+
   const selectedSection = sectionWithQuery || sectionWithText;
 
+  const displayText = (text: string) => {
+    return text.length > 200 ? `${text.slice(0, 200)}...` : text;
+  };
   useEffect(() => {
     if (selectedSection?.text) {
       const clampLines = 3; // Number of lines to clamp
-      const maxCharsPerLine = 100; // Approximate characters per line, adjust based on design
+      const maxCharsPerLine = 80; // Approximate characters per line, adjust based on design
       const totalCharsVisible = clampLines * maxCharsPerLine;
 
       const text = selectedSection.text;
@@ -55,10 +55,10 @@ const DisplayCaseSection = ({
           const end = Math.min(text.length, start + totalCharsVisible);
           setAdjustedText(`...${text.slice(start, end)}...`); // Adjusted text with ellipsis
         } else {
-          setAdjustedText(text); // No need to adjust
+          setAdjustedText(displayText(text)); // No need to adjust
         }
       } else {
-        setAdjustedText(text); // No query match, use full text
+        setAdjustedText(displayText(text)); // No query match, use full text
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,9 +73,15 @@ const DisplayCaseSection = ({
           autoEscape={true}
           textToHighlight={adjustedText || ""}
         />
+        <span
+          className="text-black-500 font-medium underline cursor-pointer ml-1"
+          onClick={() => openArticleModal(selectedArticle)}
+        >
+          {t("more")}
+        </span>
       </div>
     </>
   );
 };
 
-export default DisplayCaseSection;
+export default DisplayArticleSection;

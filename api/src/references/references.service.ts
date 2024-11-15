@@ -184,8 +184,9 @@ export class ReferencesService implements OnModuleInit {
     }
   }
 
-  public async getSectionReferences(searchTerm: string) {
-    const splitString = searchTerm.split(' > ');
+  public async getSectionReferences(sectionId: string) {
+    this.logger.log(sectionId);
+    const splitString = sectionId.split(' > ');
 
     // Remove the last element
     splitString.pop();
@@ -194,12 +195,12 @@ export class ReferencesService implements OnModuleInit {
     const nextToc = splitString.join(' > ');
 
     const query = `MATCH (n:Reference) 
-         WHERE toLower(n.context) CONTAINS toLower($searchTerm)
-         OR n.id = $searchTerm
+         WHERE toLower(n.context) CONTAINS toLower($sectionId)
+         OR n.id = $sectionId
           OR toLower(n.next_toc) CONTAINS toLower($nextToc)
          RETURN n`;
 
-    const params = { searchTerm, nextToc };
+    const params = { sectionId, nextToc };
     const result = await this.neo4jService.runQuery(query, params);
 
     return result.map((record) => record.get('n').properties);

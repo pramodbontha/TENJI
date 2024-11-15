@@ -3,6 +3,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Query,
 } from '@nestjs/common';
 import { ReferencesService } from './references.service';
@@ -49,11 +50,11 @@ export class ReferencesController {
     }
   }
 
-  @Get('section-references')
-  public async fetchSectionReferences(@Query('searchTerm') searchTerm: string) {
+  @Get('/:sectionId/section-references')
+  public async fetchSectionReferences(@Param('sectionId') sectionId: string) {
     try {
       const sectionReferences =
-        await this.referencesService.getSectionReferences(searchTerm);
+        await this.referencesService.getSectionReferences(sectionId);
       return sectionReferences;
     } catch (error) {
       throw new HttpException(

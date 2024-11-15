@@ -2,12 +2,12 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Reference, ReferenceFilter, ReferencesResponse } from "@/types";
 import { createQueryParams } from "@/utils/QueryParams";
-const apiUrl = import.meta.env.VITE_API_URL;
+import { API_URL } from "@/utils/constants";
 
 export const referenceApi = createApi({
   reducerPath: "referencesApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: apiUrl,
+    baseUrl: API_URL,
   }),
   tagTypes: ["Reference"],
   endpoints: (build) => ({
@@ -16,8 +16,8 @@ export const referenceApi = createApi({
       providesTags: ["Reference"],
     }),
     getFilteredReferences: build.query<Reference[], string>({
-      query: (searchTerm) => ({
-        url: `references/section-references?searchTerm=${searchTerm}`,
+      query: (sectionId) => ({
+        url: `references/${sectionId}/section-references`,
         method: "GET",
       }),
       providesTags: ["Reference"],

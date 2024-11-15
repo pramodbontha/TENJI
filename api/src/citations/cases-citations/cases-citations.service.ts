@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { CasesCitationsFilterDto } from '../dto/cases-citations-filter.dto';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
 export class CasesCitationsService {
   private readonly logger = new Logger(CasesCitationsService.name);
 
-  constructor(private readonly neo4jService: Neo4jService) {}
+  constructor(
+    private readonly neo4jService: Neo4jService,
+    private readonly elasticsearchService: ElasticsearchService,
+  ) {}
 
   public async getCasesCitingGivenCase(filter: CasesCitationsFilterDto) {
     const { caseId, searchTerm, skip, limit } = filter;
@@ -49,7 +53,6 @@ export class CasesCitationsService {
     SKIP toInteger($skip) LIMIT toInteger($limit)
     `;
 
-    console.log('getCasesQuery', getCountQuery());
     try {
       // Execute the count and paginated queries concurrently using neo4jService
       const [countResult, casesResult] = await Promise.all([
@@ -73,7 +76,25 @@ export class CasesCitationsService {
         return { ...citedCase, id: citedCaseId, caseName };
       });
 
-      return { cases, total: totalCount };
+      const elasticSearchResults = await Promise.all(
+        cases.map(async (caseData) => {
+          const query = {
+            index: 'cases',
+            body: {
+              query: {
+                match: {
+                  number: caseData.number,
+                },
+              },
+            },
+          };
+          const result = await this.elasticsearchService.search(query);
+          return result.hits.hits.map((hit) => hit._source);
+        }),
+      );
+      const flattenedResults = elasticSearchResults.flat();
+
+      return { cases: flattenedResults, total: totalCount };
     } catch (error) {
       console.error(error);
       this.logger.error(
@@ -163,7 +184,26 @@ export class CasesCitationsService {
         return { ...citedCase, id: citedCaseId, caseName };
       });
 
-      return { cases, total: totalCount };
+      const elasticSearchResults = await Promise.all(
+        cases.map(async (caseData) => {
+          const query = {
+            index: 'cases',
+            body: {
+              query: {
+                match: {
+                  number: caseData.number,
+                },
+              },
+            },
+          };
+          const result = await this.elasticsearchService.search(query);
+          return result.hits.hits.map((hit) => hit._source);
+        }),
+      );
+
+      const flattenedResults = elasticSearchResults.flat();
+
+      return { cases: flattenedResults, total: totalCount };
     } catch (error) {
       this.logger.error(
         `Error fetching citing cases for case ${caseId}: ${error.message}`,
@@ -195,13 +235,14 @@ export class CasesCitationsService {
   public async getArticlesCitingCase(filter: CasesCitationsFilterDto) {
     const { caseId, searchTerm, skip, limit } = filter;
     this.logger.log(`Fetching articles citing case: ${caseId}`);
-    const getSearchCondition = (alias: string) => {
+    const getSearchCondition = (alias: string, nameAlias: string) => {
       if (!searchTerm) return '';
       const lowerSearch = `toLower($searchTerm)`;
       return `
-          WHERE toLower(${alias}.number) CONTAINS ${lowerSearch}
-          OR toLower(${alias}.text) CONTAINS ${lowerSearch}
-        `;
+      WHERE toLower(${nameAlias}) CONTAINS ${lowerSearch}
+      OR toLower(${alias}.number) CONTAINS ${lowerSearch}
+      OR toLower(${alias}.text) CONTAINS ${lowerSearch}
+    `;
     };
 
     // Helper to fetch count query
@@ -209,7 +250,7 @@ export class CasesCitationsService {
         MATCH (c:Case {number: $caseId})-[:REFERS_TO]->(a:Article)
         OPTIONAL MATCH (a)-[:IS_NAMED]->(n:Name)
         with a, n
-        ${getSearchCondition('a')}
+        ${getSearchCondition('a', 'n.short')}
         RETURN count(a) AS totalCount
       `;
 
@@ -218,7 +259,7 @@ export class CasesCitationsService {
         MATCH (c:Case {number: $caseId})-[:REFERS_TO]->(a:Article)
         OPTIONAL MATCH (a)-[:IS_NAMED]->(n:Name)
         with a, n
-        ${getSearchCondition('a')}
+        ${getSearchCondition('a', 'n.short')}
         RETURN a, n.short AS articleName, elementId(a) AS elementId
         ORDER BY a.citing_cases DESC
         SKIP toInteger($skip) LIMIT toInteger($limit)
@@ -247,7 +288,26 @@ export class CasesCitationsService {
         return { ...article, id: articleId, name };
       });
 
-      return { articles, total: totalCount };
+      const elasticSearchResults = await Promise.all(
+        articles.map(async (articleData) => {
+          const query = {
+            index: 'articles',
+            body: {
+              query: {
+                match: {
+                  number: articleData.number,
+                },
+              },
+            },
+          };
+          this.logger.log(`Elasticsearch query: ${JSON.stringify(query)}`);
+          const result = await this.elasticsearchService.search(query);
+          return result.hits.hits.map((hit) => hit._source);
+        }),
+      );
+
+      const flattenedResults = elasticSearchResults.flat();
+      return { articles: flattenedResults, total: totalCount };
     } catch (error) {
       this.logger.error(
         `Error fetching articles for case ${caseId}: ${error.message}`,

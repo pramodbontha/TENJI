@@ -2,12 +2,12 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { CaseFilter, CasesResponse, ICase } from "@/types";
 import { createQueryParams } from "@/utils/QueryParams";
-const apiUrl = import.meta.env.VITE_API_URL;
+import { API_URL } from "@/utils/constants";
 
 export const caseApi = createApi({
   reducerPath: "caseApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: apiUrl,
+    baseUrl: API_URL,
   }),
   tagTypes: ["Case"],
   endpoints: (build) => ({

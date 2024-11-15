@@ -22,7 +22,7 @@ const resources = {
       name: "Name",
       summary: "Summary",
       facts: "Facts",
-      judgement: "Judgment",
+      judgement: "Judgement",
       reasoning: "Reasoning",
       headnotes: "Headnotes",
       "search-results": "Search Results",
@@ -57,6 +57,8 @@ const resources = {
       type: "Type",
       found: "Found",
       of: "of",
+      "in-the-text": "In the Text",
+      "citations-network": "Citations Network",
     },
   },
   de: {
@@ -114,6 +116,8 @@ const resources = {
       type: "Typ",
       found: "Gefunden",
       of: "von",
+      "in-the-text": "In den Text",
+      "citations-network": "Zitationsnetzwerk",
     },
   },
   "pt-PT": {
@@ -171,6 +175,8 @@ const resources = {
       type: "Tipo",
       found: "Encontrado",
       of: "de",
+      "in-the-text": "No Texto",
+      "citations-network": "Rede de Citações",
     },
   },
 };

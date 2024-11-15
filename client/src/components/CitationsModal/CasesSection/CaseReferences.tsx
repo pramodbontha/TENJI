@@ -12,6 +12,7 @@ import {
   Input,
 } from "antd";
 import { useEffect, useState } from "react";
+import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 
 interface CaseReferenceProps {
@@ -134,7 +135,14 @@ const CaseReferences = (props: CaseReferenceProps) => {
             caseReferences.references?.map((reference, index) => (
               <Col key={reference.id + index} span={24}>
                 <Card
-                  title={reference.text}
+                  title={
+                    <Highlighter
+                      highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                      searchWords={[searchTerm]}
+                      autoEscape={true}
+                      textToHighlight={reference.text}
+                    />
+                  }
                   extra={
                     <Button onClick={() => openBookModal(reference)}>
                       {t("find-in-book")}
@@ -144,7 +152,16 @@ const CaseReferences = (props: CaseReferenceProps) => {
                 >
                   <div>
                     <div className="font-bold w-24">{t("context")}:</div>
-                    <div className="line-clamp-3">{reference.context}</div>
+                    <div className="line-clamp-3">
+                      {
+                        <Highlighter
+                          highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                          searchWords={[searchTerm]}
+                          autoEscape={true}
+                          textToHighlight={reference.context}
+                        />
+                      }
+                    </div>
                   </div>
                 </Card>
               </Col>

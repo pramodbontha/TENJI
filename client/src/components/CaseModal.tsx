@@ -41,7 +41,37 @@ const CaseModal = (props: CaseModalProps) => {
           </div>
           <div className="h-[520px]">
             <Tabs defaultActiveKey="1" className="h-full">
-              <Tabs.TabPane tab={t("facts")} key="1" className="h-full">
+              <Tabs.TabPane tab={t("decision")} key="1" className="h-full">
+                <Tabs defaultActiveKey="1" tabPosition="left">
+                  <Tabs.TabPane tab={t("judgement")} key="1" className="h-full">
+                    <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
+                      <Highlighter
+                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                        searchWords={[
+                          searchBar.query || "",
+                          citationSearch || "",
+                        ]}
+                        autoEscape={true}
+                        textToHighlight={cases.judgment}
+                      />
+                    </div>
+                  </Tabs.TabPane>
+                  <Tabs.TabPane tab={t("headnotes")} key="5" className="h-full">
+                    <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
+                      <Highlighter
+                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                        searchWords={[
+                          searchBar.query || "",
+                          citationSearch || "",
+                        ]}
+                        autoEscape={true}
+                        textToHighlight={cases.headnotes}
+                      />
+                    </div>
+                  </Tabs.TabPane>
+                </Tabs>
+              </Tabs.TabPane>
+              <Tabs.TabPane tab={t("facts")} key="2" className="h-full">
                 <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
                   <Highlighter
                     highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
@@ -51,16 +81,7 @@ const CaseModal = (props: CaseModalProps) => {
                   />
                 </div>
               </Tabs.TabPane>
-              <Tabs.TabPane tab={t("judgement")} key="2" className="h-full">
-                <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                  <Highlighter
-                    highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                    searchWords={[searchBar.query || "", citationSearch || ""]}
-                    autoEscape={true}
-                    textToHighlight={cases.judgment}
-                  />
-                </div>
-              </Tabs.TabPane>
+
               <Tabs.TabPane tab={t("reasoning")} key="3" className="h-full">
                 <div className="h-[450px] w-auto overflow-y-auto overflow-x-hidden scrollbar-rounded">
                   <Highlighter
@@ -68,16 +89,6 @@ const CaseModal = (props: CaseModalProps) => {
                     searchWords={[searchBar.query || "", citationSearch || ""]}
                     autoEscape={true}
                     textToHighlight={cases.reasoning}
-                  />
-                </div>
-              </Tabs.TabPane>
-              <Tabs.TabPane tab={t("headnotes")} key="4" className="h-full">
-                <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                  <Highlighter
-                    highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                    searchWords={[searchBar.query || "", citationSearch || ""]}
-                    autoEscape={true}
-                    textToHighlight={cases.headnotes}
                   />
                 </div>
               </Tabs.TabPane>

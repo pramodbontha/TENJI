@@ -1,24 +1,12 @@
-import { ArticleModal, CitationsModal } from "@/components";
+import { ArticleCard, ArticleModal, CitationsModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";
-import {
-  setArticles,
-  setArticlesMenu,
-  setSelectedArticle,
-} from "@/slices/ArticleSlice";
+import { setArticles, setSelectedArticle } from "@/slices/ArticleSlice";
+import { setCitationsMenu } from "@/slices/CitationsSlice";
 import { Article } from "@/types";
-import {
-  Button,
-  Card,
-  Col,
-  Pagination,
-  PaginationProps,
-  Row,
-  Space,
-} from "antd";
+import { Col, Pagination, PaginationProps, Row } from "antd";
 import { useState } from "react";
-import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 
 const FilteredArticles = () => {
@@ -30,9 +18,10 @@ const FilteredArticles = () => {
 
   const [fetchFilteredArticles] = useLazyGetFilteredArticlesQuery();
 
-  const { articles, articlesCount, articlesMenu } = useAppSelector(
+  const { articles, articlesCount } = useAppSelector(
     (state: RootState) => state.articles
   );
+  const { citationsMenu } = useAppSelector((state) => state.citations);
   const searchBar = useAppSelector((state: RootState) => state.searchBar);
   const values = useAppSelector((state: RootState) => state.form);
   const dispatch = useAppDispatch();
@@ -68,7 +57,8 @@ const FilteredArticles = () => {
 
   const openCitationModal = (article: Article) => {
     setArticle(article);
-    dispatch(setArticlesMenu([...articlesMenu, article]));
+    // dispatch(setArticlesMenu([...articlesMenu, article]));
+    dispatch(setCitationsMenu([...citationsMenu, article]));
     dispatch(setSelectedArticle(article));
     setIsCitationModalOpen(true);
   };
@@ -94,53 +84,13 @@ const FilteredArticles = () => {
             {articles &&
               articles?.map((article) => (
                 <Col key={article.id} span={24}>
-                  <Card
-                    title={
-                      <Highlighter
-                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                        searchWords={[searchBar.query]}
-                        autoEscape={true}
-                        textToHighlight={`${t("article-number")}: ${
-                          article.number
-                        }`}
-                      />
-                    }
-                    extra={
-                      <Space>
-                        <Button onClick={() => openCitationModal(article)}>
-                          {t("citations")}
-                        </Button>
-                        <Button onClick={() => openArticleModal(article)}>
-                          {t("more")}
-                        </Button>
-                      </Space>
-                    }
-                    className="h-44 drop-shadow-md"
-                  >
-                    {article.name && (
-                      <div className="flex">
-                        <div className="font-bold mr-2">{t("name")}:</div>
-                        <div className="line-clamp-1">
-                          <Highlighter
-                            highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                            searchWords={[searchBar.query]}
-                            autoEscape={true}
-                            textToHighlight={article.name}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex">
-                      <div className="line-clamp-3">
-                        <Highlighter
-                          highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                          searchWords={[searchBar.query]}
-                          autoEscape={true}
-                          textToHighlight={article.text}
-                        />
-                      </div>
-                    </div>
-                  </Card>
+                  <ArticleCard
+                    article={article}
+                    isSearchResult={true}
+                    searchTerm={searchBar.query}
+                    openArticleModal={openArticleModal}
+                    openCitationModal={openCitationModal}
+                  />
                 </Col>
               ))}
           </Row>

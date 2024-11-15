@@ -5,6 +5,7 @@ import { citationsApi } from "@/services/CitationsApi";
 import { referenceApi } from "@/services/ReferenceApi";
 import { articleReducer } from "@/slices/ArticleSlice";
 import { caseReducer } from "@/slices/CaseSlice";
+import { citationsReducer } from "@/slices/CitationsSlice";
 import { formReducer } from "@/slices/FormSlice";
 import { languageReducer } from "@/slices/LanguageSlice";
 import { referenceReducer } from "@/slices/ReferenceSlice";
@@ -25,6 +26,7 @@ export const store = configureStore({
     searchBar: searchBarReducer,
     form: formReducer,
     language: languageReducer,
+    citations: citationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

@@ -1,20 +1,11 @@
 import { CitationsCases, ICase } from "@/types";
-import {
-  Button,
-  Card,
-  Col,
-  Input,
-  Pagination,
-  PaginationProps,
-  Row,
-  Space,
-} from "antd";
-import DisplayCaseSection from "../DisplayCaseSection";
+import { Col, Input, Pagination, PaginationProps, Row } from "antd";
 import { useLazyGetCitedByCasesQuery } from "@/services/CitationsApi";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setCitedByCases } from "@/slices/CaseSlice";
 import { useTranslation } from "react-i18next";
+import { CaseCard } from "@/components/Cards";
 
 interface CitedByCaseProps {
   citedByCases: CitationsCases;
@@ -136,43 +127,14 @@ const CitedByCase = (props: CitedByCaseProps) => {
           <Row gutter={[16, 16]}>
             {citedByCases.cases?.map((cases, index) => (
               <Col key={cases.id + index} span={24}>
-                <Card
-                  title={`${t("case-number")}: ${cases.number}`}
-                  extra={
-                    <Space>
-                      <Button onClick={() => addCaseCitations(cases)}>
-                        {t("citations")}
-                      </Button>
-                      <Button onClick={() => openCaseModal(cases)}>
-                        {t("more")}
-                      </Button>
-                    </Space>
-                  }
-                  className="h-44 drop-shadow-md"
-                >
-                  <div className="flex">
-                    {cases.caseName && (
-                      <div className="flex mr-4">
-                        <div className="font-bold mr-1">{t("name")}: </div>
-                        <div className="line-clamp-1">{cases.caseName}</div>
-                      </div>
-                    )}
-                    <div className="mr-4">
-                      <span className="font-semibold mr-1">{t("year")}: </span>
-                      <span>{cases.year}</span>
-                    </div>
-                    <div className="mr-4">
-                      <span className="font-semibold mr-1">{t("type")}: </span>
-                      <span>{cases.decision_type}</span>
-                    </div>
-                  </div>
-                  <div className="line-clamp-3 mt-1">
-                    <DisplayCaseSection
-                      selectedCase={cases}
-                      searchTerm={searchTerm}
-                    />
-                  </div>
-                </Card>
+                <CaseCard
+                  key={"cited-by-cases" + cases.id}
+                  cases={cases}
+                  isSearchResult={true}
+                  searchTerm={searchTerm}
+                  openCaseModal={openCaseModal}
+                  openCitationModal={addCaseCitations}
+                />
               </Col>
             ))}
           </Row>

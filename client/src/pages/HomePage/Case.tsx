@@ -1,12 +1,13 @@
 import { useGetCasesQuery } from "@/services/CaseApi";
 import { CaretLeftOutlined, CaretRightOutlined } from "@ant-design/icons";
-import { Card, Button, Row, Col, Space } from "antd";
+import { Button, Row, Col } from "antd";
 import { useState } from "react";
 import { ICase as CaseType } from "@/types";
-import { CaseModal, CitationsModal, DisplayCaseSection } from "@/components";
+import { CaseCard, CaseModal, CitationsModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { setCasesMenu, setSelectedCase } from "@/slices/CaseSlice";
+import { setSelectedCase } from "@/slices/CaseSlice";
 import { useTranslation } from "react-i18next";
+import { setCitationsMenu } from "@/slices/CitationsSlice";
 
 const Case = () => {
   const { data: cases } = useGetCasesQuery();
@@ -18,7 +19,7 @@ const Case = () => {
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
   const pageSize = 3;
 
-  const { casesMenu } = useAppSelector((state) => state.cases);
+  const { citationsMenu } = useAppSelector((state) => state.citations);
 
   const dispatch = useAppDispatch();
 
@@ -49,7 +50,7 @@ const Case = () => {
 
   const openCitationModal = (cases: CaseType) => {
     setModalCase(cases);
-    dispatch(setCasesMenu([...casesMenu, cases]));
+    dispatch(setCitationsMenu([...citationsMenu, cases]));
     dispatch(setSelectedCase(cases));
     setIsCitationModalOpen(true);
   };
@@ -87,43 +88,12 @@ const Case = () => {
                     lg={8}
                     className={` ${animate ? animate : ""}`}
                   >
-                    <Card
-                      title={`${t("case-number")}: ${cases.number}`}
-                      extra={
-                        <>
-                          <Space>
-                            <Button onClick={() => openCitationModal(cases)}>
-                              {t("citations")}
-                            </Button>
-                            <Button onClick={() => openCaseModal(cases)}>
-                              {t("more")}
-                            </Button>
-                          </Space>
-                        </>
-                      }
-                      className="h-48 drop-shadow-md"
-                    >
-                      <div className="flex">
-                        <div className="flex max-w-40">
-                          <div className="font-bold mr-2">{t("name")}:</div>
-                          <div className="line-clamp-1">{cases.caseName}</div>
-                        </div>
-                        <div className="ml-4">
-                          <span className="font-semibold">{t("year")}:</span>
-                          <span>{cases.year}</span>
-                        </div>
-                        <div className="ml-4">
-                          <span className="font-semibold">
-                            {t("type")}
-                            {": "}
-                          </span>
-                          <span>{cases.decision_type}</span>
-                        </div>
-                      </div>
-                      <div className="line-clamp-3 mt-1">
-                        <DisplayCaseSection selectedCase={cases} />
-                      </div>
-                    </Card>
+                    <CaseCard
+                      cases={cases}
+                      isSearchResult={false}
+                      openCaseModal={openCaseModal}
+                      openCitationModal={openCitationModal}
+                    />
                   </Col>
                 ))}
               </Row>

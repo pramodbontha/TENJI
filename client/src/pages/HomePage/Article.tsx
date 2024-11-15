@@ -1,19 +1,25 @@
-import { ArticleModal, CitationsModal } from "@/components";
+import { ArticleCard, ArticleModal, CitationsModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useGetArticlesQuery } from "@/services/ArticleApi";
-import { setArticlesMenu, setSelectedArticle } from "@/slices/ArticleSlice";
+import { setSelectedArticle } from "@/slices/ArticleSlice";
+import { setCitationsMenu } from "@/slices/CitationsSlice";
 import { Article as ArticleType } from "@/types";
 import {
   CaretLeftOutlined,
   CaretRightOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import { Card, Button, Row, Col, Space, Spin } from "antd";
+import { Button, Row, Col, Spin } from "antd";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const Article = () => {
-  const { data: articles, isLoading, isError } = useGetArticlesQuery();
+  const {
+    data: articles,
+    isLoading,
+    isError,
+    isFetching,
+  } = useGetArticlesQuery();
 
   const [current, setCurrent] = useState(1);
   const [animate, setAnimate] = useState("");
@@ -21,7 +27,7 @@ const Article = () => {
   const [article, setArticle] = useState({} as ArticleType);
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
 
-  const { articlesMenu } = useAppSelector((state) => state.articles);
+  const { citationsMenu } = useAppSelector((state) => state.citations);
 
   const dispatch = useAppDispatch();
 
@@ -54,7 +60,8 @@ const Article = () => {
 
   const openCitationModal = (article: ArticleType) => {
     setArticle(article);
-    dispatch(setArticlesMenu([...articlesMenu, article]));
+    // dispatch(setArticlesMenu([...articlesMenu, article]));
+    dispatch(setCitationsMenu([...citationsMenu, article]));
     dispatch(setSelectedArticle(article));
     setIsCitationModalOpen(true);
   };
@@ -73,7 +80,7 @@ const Article = () => {
 
   return (
     <>
-      {isLoading && (
+      {isLoading && isFetching && (
         <div className="flex justify-center items-center h-64">
           <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
         </div>
@@ -103,30 +110,12 @@ const Article = () => {
                       lg={8}
                       className={` ${animate ? animate : ""}`}
                     >
-                      <Card
-                        title={`${t("article-number")}: ${article.number}`}
-                        className="h-44 drop-shadow-md"
-                        extra={
-                          <>
-                            <Space>
-                              <Button
-                                onClick={() => openCitationModal(article)}
-                              >
-                                {t("citations")}
-                              </Button>
-                              <Button onClick={() => openArticleModal(article)}>
-                                {t("more")}
-                              </Button>
-                            </Space>
-                          </>
-                        }
-                      >
-                        <div className="flex line-clamp-1">
-                          <div className="font-bold mr-2">{t("name")}:</div>
-                          <div className="line-clamp-1 ">{article.name}</div>
-                        </div>
-                        <div className="line-clamp-3">{article.text}</div>
-                      </Card>
+                      <ArticleCard
+                        article={article}
+                        isSearchResult={false}
+                        openArticleModal={openArticleModal}
+                        openCitationModal={openCitationModal}
+                      />
                     </Col>
                   ))}
               </Row>

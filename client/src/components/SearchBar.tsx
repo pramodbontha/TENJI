@@ -9,7 +9,7 @@ import FilterModal from "./FilterModal";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   setArticleCount,
   setArticles,
@@ -23,6 +23,7 @@ import _ from "lodash";
 import { setFormValues } from "@/slices/FormSlice";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { useTranslation } from "react-i18next";
+import { RootState } from "@/redux/store";
 
 const SearchBar = () => {
   const navigate = useNavigate();
@@ -32,29 +33,13 @@ const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [values, setValues] = useState<any>({});
-
-  const [fetchFilteredArticles, { isLoading: isArticlesLoading }] =
-    useLazyGetFilteredArticlesQuery();
+  const searchBar = useAppSelector((state: RootState) => state.searchBar);
+  const [fetchFilteredArticles] = useLazyGetFilteredArticlesQuery();
   const [fetchFilteredCases] = useLazyGetFilteredCasesQuery();
   const [fetchFilteredReferences] =
     useLazyGetFilteredReferencesWithQueriesQuery();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-
-  // const handleOk = async () => {
-  //   try {
-  //     const { data: filteredArticles } = await fetchFilteredArticles("59");
-  //     const { data: filteredCases } = await fetchFilteredCases("59");
-  //     filteredArticles && dispatch(setArticles(filteredArticles));
-  //     filteredCases && dispatch(setCases(filteredCases));
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  //   navigate("/search");
-  //   setIsModalOpen(false);
-  // };
-
-  dispatch(setIsArticleLoading(isArticlesLoading));
 
   const handleCancel = () => {
     setIsModalOpen(false);
@@ -76,9 +61,20 @@ const SearchBar = () => {
     setValues(values);
   };
 
+  const clearCache = () => {
+    if (searchTerm !== searchBar.query) {
+      dispatch(setArticles([]));
+      dispatch(setCases([]));
+      dispatch(setReferences([]));
+    }
+  };
+
   const handleSearch = async () => {
     try {
       dispatch(setQuery(searchTerm));
+      dispatch(setIsArticleLoading(true));
+      clearCache();
+      navigate("/search");
       const articleFilter = {
         searchTerm,
         name: values.articleName,
@@ -134,10 +130,10 @@ const SearchBar = () => {
       filteredReferences &&
         filteredReferences.total !== undefined &&
         dispatch(setReferenceCount(filteredReferences.total));
+      dispatch(setIsArticleLoading(false));
     } catch (error) {
       console.error(error);
     }
-    navigate("/search");
   };
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

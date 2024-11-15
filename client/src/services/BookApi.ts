@@ -1,12 +1,12 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Book } from "@/types";
-const apiUrl = import.meta.env.VITE_API_URL;
+import { API_URL } from "@/utils/constants";
 
 export const bookApi = createApi({
   reducerPath: "booksApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: apiUrl,
+    baseUrl: API_URL,
   }),
   tagTypes: ["Book"],
   endpoints: (build) => ({

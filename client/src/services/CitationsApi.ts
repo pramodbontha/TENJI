@@ -10,11 +10,11 @@ import {
   CitationsReferences,
 } from "@/types";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+import { API_URL } from "@/utils/constants";
 
 export const citationsApi = createApi({
   reducerPath: "citationsApi",
-  baseQuery: fetchBaseQuery({ baseUrl: apiUrl }),
+  baseQuery: fetchBaseQuery({ baseUrl: API_URL }),
   tagTypes: ["Citations"],
   endpoints: (build) => ({
     // Citations cases

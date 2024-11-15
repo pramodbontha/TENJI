@@ -2,12 +2,12 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Article, ArticleFilter, ArticlesResponse } from "@/types";
 import { createQueryParams } from "@/utils/QueryParams";
-const apiUrl = import.meta.env.VITE_API_URL;
+import { API_URL } from "@/utils/constants";
 
 export const articleApi = createApi({
   reducerPath: "articlesApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: apiUrl,
+    baseUrl: API_URL,
   }),
   tagTypes: ["Article"],
   endpoints: (build) => ({
