@@ -5,7 +5,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import { Input, Col, Row, Button, Form, Badge } from "antd";
-import FilterModal from "./FilterModal";
+import { FilterModal } from "@/components";
 import { useState, KeyboardEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";

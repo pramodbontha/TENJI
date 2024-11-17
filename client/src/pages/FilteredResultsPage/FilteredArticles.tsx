@@ -57,7 +57,6 @@ const FilteredArticles = () => {
 
   const openCitationModal = (article: Article) => {
     setArticle(article);
-    // dispatch(setArticlesMenu([...articlesMenu, article]));
     dispatch(setCitationsMenu([...citationsMenu, article]));
     dispatch(setSelectedArticle(article));
     setIsCitationModalOpen(true);
