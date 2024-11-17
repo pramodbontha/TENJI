@@ -75,9 +75,10 @@ NEO4J_AUTH=
 NEO4J_URL=
 NEO4J_USER=
 NEO4J_PASSWORD=
+PORT=
 ELASTICSEARCH_URL=
 VITE_API_URL=
-PORT=
+CLIENT_URL=
 ```
 
 ### 3. Start the Application
@@ -85,7 +86,7 @@ PORT=
 For development:
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ### 4. Access the Services
@@ -95,13 +96,14 @@ docker-compose up -d
 - **API (NestJS)**: http://localhost:3000
 - **Client (React)**: http://localhost:5173
 - **Lemmatizer**: http://localhost:5000
+- **App**: http://localhost
 
 ### 5. Stopping the Application
 
 To stop the services, run:
 
 ```bash
-docker-compose down
+docker-compose -f docker-compose.dev.yml down
 ```
 
 ## Development Workflow
@@ -130,5 +132,5 @@ docker-compose down
 - To rebuild the images after making changes, run:
 
   ```bash
-  docker-compose up --build
+  docker-compose -f docker-compose.dev.yml up --build -d
   ```
