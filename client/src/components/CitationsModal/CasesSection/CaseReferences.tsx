@@ -123,6 +123,7 @@ const CaseReferences = (props: CaseReferenceProps) => {
                 pageSize={pageSize}
                 total={caseReferences.total}
                 onChange={onChange}
+                locale={{ items_per_page: t("items-per-page") }}
               />
             </div>
           )}

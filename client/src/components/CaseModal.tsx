@@ -4,6 +4,7 @@ import Highlighter from "react-highlight-words";
 import { useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import { useTranslation } from "react-i18next";
+import { caseNumberFormatter } from "@/utils/helpers";
 
 interface CaseModalProps {
   cases: ICase;
@@ -20,7 +21,7 @@ const CaseModal = (props: CaseModalProps) => {
     <>
       <div>
         <Modal
-          title={`${t("case-number")}: ${cases.number}`}
+          title={`${t("case-number")}: ${caseNumberFormatter(cases.number)}`}
           open={isOpen}
           onOk={onClose}
           onCancel={onClose}

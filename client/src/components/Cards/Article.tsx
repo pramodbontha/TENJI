@@ -3,6 +3,7 @@ import { Button, Card, Space } from "antd";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 import DisplayArticleSection from "../DisplayArticleSection";
+import { articleNumberFormatter } from "@/utils/helpers";
 
 interface ArticleCardProps {
   article: Article;
@@ -31,7 +32,9 @@ const ArticleCard = (props: ArticleCardProps) => {
             searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
             autoEscape={true}
             textToHighlight={
-              article.name ? `${article.name}` : `${article.number}`
+              article.name
+                ? `${article.name}`
+                : articleNumberFormatter(article.number)
             }
           />
         }
@@ -57,7 +60,7 @@ const ArticleCard = (props: ArticleCardProps) => {
                 highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
                 searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
                 autoEscape={true}
-                textToHighlight={`${article.number}`}
+                textToHighlight={articleNumberFormatter(article.number)}
               />
             </div>
           </div>

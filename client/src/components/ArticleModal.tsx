@@ -4,6 +4,7 @@ import { useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
+import { articleNumberFormatter } from "@/utils/helpers";
 
 interface ArticleModalProps {
   article: Article;
@@ -24,7 +25,9 @@ const ArticleModal = (props: ArticleModalProps) => {
             highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
             searchWords={[searchBar.query]}
             autoEscape={true}
-            textToHighlight={`${t("article-number")}: ${article.number}`}
+            textToHighlight={`${t("article-number")}: ${articleNumberFormatter(
+              article.number
+            )}`}
           />
         }
         open={isOpen}

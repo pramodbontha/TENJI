@@ -115,6 +115,7 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
                 pageSize={pageSize}
                 total={casesCitingArticle.total}
                 onChange={onChange}
+                locale={{ items_per_page: t("items-per-page") }}
               />
             </div>
           )}

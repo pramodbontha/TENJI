@@ -382,7 +382,7 @@ export class CasesCitationsService {
       const references = referencesResult.map((record) => {
         const reference = record.get('r').properties;
         const referenceId = record.get('elementId');
-        return { ...reference, id: referenceId };
+        return { ...reference, referenceId };
       });
 
       return { references, total: totalCount };

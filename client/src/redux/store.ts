@@ -12,6 +12,7 @@ import { referenceReducer } from "@/slices/ReferenceSlice";
 import { searchBarReducer } from "@/slices/SearchBarSlice";
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
+import { appTourReducer } from "@/slices/AppTourSlice";
 
 export const store = configureStore({
   reducer: {
@@ -27,6 +28,7 @@ export const store = configureStore({
     form: formReducer,
     language: languageReducer,
     citations: citationsReducer,
+    appTour: appTourReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

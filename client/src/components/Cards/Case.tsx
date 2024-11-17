@@ -3,6 +3,7 @@ import { Button, Card, Space } from "antd";
 import { useTranslation } from "react-i18next";
 import { DisplayCaseSection } from "..";
 import Highlighter from "react-highlight-words";
+import { caseNumberFormatter } from "@/utils/helpers";
 
 interface CaseCardProps {
   cases: ICase;
@@ -30,7 +31,11 @@ const CaseCard = (props: CaseCardProps) => {
             highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
             searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
             autoEscape={true}
-            textToHighlight={cases.caseName ? cases.caseName : cases.number}
+            textToHighlight={
+              cases.caseName
+                ? cases.caseName
+                : caseNumberFormatter(cases.number)
+            }
           />
         }
         extra={
@@ -56,7 +61,7 @@ const CaseCard = (props: CaseCardProps) => {
                   highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
                   searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
                   autoEscape={true}
-                  textToHighlight={cases.number}
+                  textToHighlight={caseNumberFormatter(cases.number)}
                 />
               </div>
             </>

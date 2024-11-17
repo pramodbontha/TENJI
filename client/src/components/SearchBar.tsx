@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Input, Col, Row, Button, Form, Badge } from "antd";
 import FilterModal from "./FilterModal";
-import { useState } from "react";
+import { useState, KeyboardEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -136,7 +136,7 @@ const SearchBar = () => {
     }
   };
 
-  const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onSearchInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
@@ -166,13 +166,19 @@ const SearchBar = () => {
     setIsModalOpen(false);
   };
 
+  const onKeyDownHandler = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <>
       <Row gutter={6}>
         <Col span={4}>
           <div className="p-1 mr-1 drop-shadow-md flex justify-end">
             <Button
-              id="first-element"
+              id="home-button"
               icon={<HomeOutlined />}
               onClick={navigateToHomePage}
             />
@@ -180,7 +186,7 @@ const SearchBar = () => {
         </Col>
         <Col span={14}>
           <div
-            id="second-element"
+            id="search-input"
             className="h-auto bg-white rounded-full p-1 flex drop-shadow-md"
           >
             <Input
@@ -188,16 +194,19 @@ const SearchBar = () => {
               value={searchTerm}
               variant="borderless"
               onChange={onSearchInputChange}
+              onKeyDown={onKeyDownHandler}
             />
             <Button
               shape="circle"
               icon={<SearchOutlined />}
               onClick={handleSearch}
+              tabIndex={0}
+              onKeyDown={onKeyDownHandler}
             />
           </div>
         </Col>
         <Col span={4} className="flex">
-          <div id="third-element" className="p-1 drop-shadow-md">
+          <div id="filter-button" className="p-1 drop-shadow-md">
             <Badge
               style={{ backgroundColor: "#6b7280" }}
               count={getAppliedFiltersCount()}
@@ -211,7 +220,7 @@ const SearchBar = () => {
               </Button>
             </Badge>
           </div>
-          <div id="fourth-element" className="p-1 ml-2 drop-shadow-md">
+          <div id="clear-filters" className="p-1 ml-2 drop-shadow-md">
             <Button icon={<DeleteOutlined />} onClick={clearFilters}>
               {t("clear-filters")}
             </Button>

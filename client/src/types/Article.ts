@@ -5,7 +5,7 @@ export interface Article {
     low: number;
     high: number;
   };
-  number: number;
+  number: string;
   text: string;
   total_case_citations: {
     low: number;

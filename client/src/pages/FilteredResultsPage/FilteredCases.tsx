@@ -85,6 +85,7 @@ const FilteredCases = () => {
             total={casesCount}
             onChange={onChange}
             onShowSizeChange={onChange}
+            locale={{ items_per_page: t("items-per-page") }}
           />
         </div>
         <div className="mt-2 h-[660px] p-2 overflow-y-auto overflow-x-hidden scrollbar-rounded">
@@ -110,6 +111,7 @@ const FilteredCases = () => {
           pageSize={pageSize}
           total={casesCount}
           onChange={onChange}
+          locale={{ items_per_page: t("items-per-page") }}
         />
       </div>
       {isCaseModelOpen && (

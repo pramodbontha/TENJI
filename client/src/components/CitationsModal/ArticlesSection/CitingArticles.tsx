@@ -119,6 +119,7 @@ const CitingArticles = (props: CitingArticlesProps) => {
                 pageSize={pageSize}
                 total={citingArticles.total}
                 onChange={onChange}
+                locale={{ items_per_page: t("items-per-page") }}
               />
             </div>
           )}

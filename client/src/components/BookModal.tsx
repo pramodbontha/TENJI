@@ -285,6 +285,7 @@ const BookModal = (props: BookModalProps) => {
                         pageSize={pageSize}
                         total={filteredReferences.length}
                         onChange={onChange}
+                        locale={{ items_per_page: t("items-per-page") }}
                       />
                     </div>
                   )}

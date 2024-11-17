@@ -125,6 +125,7 @@ const ArticleReferences = (props: ArticleReferenceProps) => {
                 pageSize={pageSize}
                 total={articleReferences.total}
                 onChange={onChange}
+                locale={{ items_per_page: t("items-per-page") }}
               />
             </div>
           )}

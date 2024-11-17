@@ -6,6 +6,7 @@ import FilteredArticles from "./FilteredArticles";
 import FilteredCases from "./FilteredCases";
 import FilteredReferences from "./FilteredReferences";
 import { useTranslation } from "react-i18next";
+import { AppTour } from "@/components";
 
 const { Item } = Menu;
 
@@ -78,6 +79,7 @@ const FilteredResultsPage = () => {
           )}
         </div>
       </div>
+      <AppTour />
     </>
   );
 };
