@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components";
-import { FilteredResultsPage, HomePage } from "@/pages";
+import { FilteredResultsPage, HomePage, NotFound } from "@/pages";
 
 function App() {
   return (
@@ -11,6 +11,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="search" element={<FilteredResultsPage />} />
           </Route>
+          <Route path="/*" element={<NotFound />} />
         </Routes>
       </Router>
     </>
