@@ -65,6 +65,7 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { setCitationsMenu } from "@/slices/CitationsSlice";
 import _ from "lodash";
+import { articleNumberFormatter, caseNumberFormatter } from "@/utils/helpers";
 
 const { Item } = Menu;
 
@@ -364,8 +365,14 @@ const CitationsModal = (props: CitationsModalProps) => {
     setIsBookModalOpen(true);
   };
 
-  const getCitationsLabel = (item: Article | ICase) => {
+  const getCitationsKey = (item: Article | ICase) => {
     return "caseName" in item ? "C:" + item.number : "A:" + item.number;
+  };
+
+  const getCitationLabel = (item: Article | ICase) => {
+    return "caseName" in item
+      ? caseNumberFormatter(item.number)
+      : articleNumberFormatter(item.number);
   };
 
   return (
@@ -391,8 +398,8 @@ const CitationsModal = (props: CitationsModalProps) => {
                 >
                   {citationsMenu &&
                     citationsMenu.map((menuItem) => (
-                      <Item key={getCitationsLabel(menuItem)}>
-                        {menuItem.number}
+                      <Item key={getCitationsKey(menuItem)}>
+                        {getCitationLabel(menuItem)}
                       </Item>
                     ))}
                 </Menu>
@@ -401,9 +408,11 @@ const CitationsModal = (props: CitationsModalProps) => {
             <div className="w-[1500px] ml-4 ">
               {isArticleMenuClicked && (
                 <>
-                  <div className="font-bold">{`${t(
-                    "article-number"
-                  )}: ${selectedCitationNumber}`}</div>
+                  <div className="font-bold">{`${t("article-number")}: ${
+                    selectedCitationNumber
+                      ? articleNumberFormatter(selectedCitationNumber)
+                      : ""
+                  }`}</div>
                   <div className="h-[650px]">
                     <Tabs defaultActiveKey="1" className="h-full">
                       <Tabs.TabPane
@@ -477,9 +486,11 @@ const CitationsModal = (props: CitationsModalProps) => {
               )}
               {!isArticleMenuClicked && (
                 <>
-                  <div className="font-bold">{`${t(
-                    "case-number"
-                  )}: ${selectedCitationNumber}`}</div>
+                  <div className="font-bold">{`${t("case-number")}: ${
+                    selectedCitationNumber
+                      ? caseNumberFormatter(selectedCitationNumber)
+                      : ""
+                  }`}</div>
                   <div className="h-[650px]">
                     <Tabs defaultActiveKey="1" className="h-full">
                       <Tabs.TabPane

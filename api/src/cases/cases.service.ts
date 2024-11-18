@@ -144,22 +144,19 @@ export class CasesService implements OnModuleInit {
   // Utility function to normalize the case number format
   private normalizeCaseNumber(caseNumber: string): string {
     // Regular expression to detect if "BVerfGE" is present at the end or beginning
-    const caseNumberPattern =
-      /^(BVerfGE\s*\d+\s*,\s*\d+)|(\d+\s*,\s*\d+\s*BVerfGE)$/i;
-
-    // Check if the input matches either "BVerfGE digits, digits" or "digits, digits BVerfGE"
-    const match = caseNumber.match(caseNumberPattern);
-
-    if (match) {
-      // Ensure "BVerfGE" is always at the beginning, and strip extra spaces
-      const numberOnly = caseNumber
-        .replace(/BVerfGE/i, '')
-        .trim()
-        .replace(/\s*,\s*/, ',');
-      return `BVerfGE${numberOnly}`;
+    if (/^\D+\d+,\d+$/.test(caseNumber)) {
+      return caseNumber; // Return as is if already formatted
     }
 
-    // If the input doesn't match the expected pattern, return it as-is
+    // Attempt to extract components and normalize
+    const match = caseNumber.match(/(\D+)?\s*(\d+)\s*(\d+)\s*(\D+)?/);
+    if (match) {
+      const [, prefix1, number1, number2, prefix2] = match;
+      const prefix = prefix1 || prefix2 || ''; // Pick whichever prefix exists
+      return `${prefix.trim()}${number1},${number2}`;
+    }
+
+    // If no match, return the input unchanged
     return caseNumber;
   }
 

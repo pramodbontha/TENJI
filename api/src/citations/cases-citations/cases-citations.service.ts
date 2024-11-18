@@ -12,16 +12,14 @@ export class CasesCitationsService {
     private readonly elasticsearchService: ElasticsearchService,
   ) {}
 
-  public async getCasesCitingGivenCase(filter: CasesCitationsFilterDto) {
-    const { caseId, searchTerm, skip, limit } = filter;
-
-    this.logger.log(`Fetching cases citing case: ${caseId}`);
-
-    // Helper function to construct the search condition for cited cases
-    const getSearchCondition = (alias: string, caseNameAlias: string) => {
-      if (!searchTerm) return '';
-      const lowerSearch = `toLower($searchTerm)`;
-      return `
+  private getSearchCondition(
+    searchTerm: string,
+    alias: string,
+    caseNameAlias: string,
+  ) {
+    if (!searchTerm) return '';
+    const lowerSearch = `toLower($searchTerm)`;
+    return `
       WHERE toLower(${caseNameAlias}) CONTAINS ${lowerSearch} 
       OR toLower(${alias}.number) CONTAINS ${lowerSearch}
       OR toLower(${alias}.judgment) CONTAINS ${lowerSearch}
@@ -31,14 +29,19 @@ export class CasesCitationsService {
       OR toLower(${alias}.year) CONTAINS ${lowerSearch}
       OR toLower(${alias}.decision_type) CONTAINS ${lowerSearch}
       `;
-    };
+  }
+
+  public async getCasesCitingGivenCase(filter: CasesCitationsFilterDto) {
+    const { caseId, searchTerm, skip, limit } = filter;
+
+    this.logger.log(`Fetching cases citing case: ${caseId}`);
 
     // Helper to fetch count query for cases citing other cases
     const getCountQuery = () => `
     MATCH (c:Case)-[:REFERS_TO]->(citedCase:Case {number: $caseId})
     OPTIONAL MATCH (c)-[:IS_NAMED]->(n:Name)
     WITH c, n  
-    ${getSearchCondition('c', 'n.short')}
+    ${this.getSearchCondition(searchTerm, 'c', 'n.short')}
     RETURN count(c) AS totalCount
     `;
 
@@ -47,7 +50,7 @@ export class CasesCitationsService {
     MATCH (c:Case)-[:REFERS_TO]->(citedCase:Case {number: $caseId})
     OPTIONAL MATCH (c)-[:IS_NAMED]->(n:Name)
     WITH c, n 
-    ${getSearchCondition('c', 'n.short')}
+    ${this.getSearchCondition(searchTerm, 'c', 'n.short')}
     RETURN DISTINCT c, n.short AS caseName, elementId(c) AS elementId
     ORDER BY c.citing_cases DESC
     SKIP toInteger($skip) LIMIT toInteger($limit)
@@ -125,28 +128,12 @@ export class CasesCitationsService {
     const { caseId, searchTerm, skip, limit } = filter;
     this.logger.log(`Fetching cases citing case: ${caseId}`);
 
-    // Helper function to construct the search condition
-    const getSearchCondition = (alias: string, caseNameAlias: string) => {
-      if (!searchTerm) return '';
-      const lowerSearch = `toLower($searchTerm)`;
-      return `
-      WHERE toLower(${caseNameAlias}) CONTAINS ${lowerSearch} 
-      OR toLower(${alias}.number) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.judgment) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.facts) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.reasoning) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.headnotes) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.year) CONTAINS ${lowerSearch}
-      OR toLower(${alias}.decision_type) CONTAINS ${lowerSearch}
-      `;
-    };
-
     // Helper to fetch count query
     const getCountQuery = () => `
     MATCH (c:Case {number: $caseId})-[:REFERS_TO]->(citedCase:Case)
     OPTIONAL MATCH (citedCase)-[:IS_NAMED]->(n:Name)
     WITH citedCase, n  
-    ${getSearchCondition('citedCase', 'n.short')}
+    ${this.getSearchCondition(searchTerm, 'citedCase', 'n.short')}
     RETURN count(citedCase) AS totalCount
     `;
 
@@ -155,7 +142,7 @@ export class CasesCitationsService {
     MATCH (c:Case {number: $caseId})-[:REFERS_TO]->(citedCase:Case)
     OPTIONAL MATCH (citedCase)-[:IS_NAMED]->(n:Name)
     WITH citedCase, n 
-    ${getSearchCondition('citedCase', 'n.short')}
+    ${this.getSearchCondition(searchTerm, 'citedCase', 'n.short')}
     RETURN DISTINCT citedCase, n.short AS caseName, elementId(citedCase) AS elementId
     ORDER BY citedCase.citing_cases DESC
     SKIP toInteger($skip) LIMIT toInteger($limit)
