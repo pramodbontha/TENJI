@@ -9,6 +9,7 @@ interface CaseCardProps {
   cases: ICase;
   isSearchResult?: boolean;
   searchTerm?: string;
+  lemmatizedSearchTerm?: string;
   openCaseModal: (cases: ICase) => void;
   openCitationModal: (cases: ICase) => void;
 }
@@ -18,6 +19,7 @@ const CaseCard = (props: CaseCardProps) => {
     cases,
     isSearchResult,
     searchTerm,
+    lemmatizedSearchTerm,
     openCaseModal,
     openCitationModal,
   } = props;
@@ -29,7 +31,13 @@ const CaseCard = (props: CaseCardProps) => {
         title={
           <Highlighter
             highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-            searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
+            searchWords={
+              isSearchResult && searchTerm
+                ? ([searchTerm, lemmatizedSearchTerm].filter(
+                    Boolean
+                  ) as string[])
+                : []
+            }
             autoEscape={true}
             textToHighlight={
               cases.caseName
@@ -55,8 +63,7 @@ const CaseCard = (props: CaseCardProps) => {
         <div className="flex -mt-3">
           {cases.caseName && (
             <>
-              <div className="font-bold mr-2">{t("number")}:</div>
-              <div className="line-clamp-1">
+              <div className="line-clamp-1 font-semibold">
                 <Highlighter
                   highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
                   searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
@@ -85,6 +92,9 @@ const CaseCard = (props: CaseCardProps) => {
           <DisplayCaseSection
             selectedCase={cases}
             searchTerm={isSearchResult && searchTerm ? searchTerm : ""}
+            lemmatizedSearchTerm={
+              isSearchResult && lemmatizedSearchTerm ? lemmatizedSearchTerm : ""
+            }
             openCaseModal={openCaseModal}
           />
         </div>

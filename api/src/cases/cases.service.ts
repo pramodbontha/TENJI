@@ -3,6 +3,7 @@ import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { FilterCasesQueryDto } from './dto/filter-cases-query.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
+import { normalizeCaseNumber } from 'src/utils/helpers';
 
 @Injectable()
 export class CasesService implements OnModuleInit {
@@ -123,80 +124,10 @@ export class CasesService implements OnModuleInit {
     }
   }
 
-  async searchCasesByNumber(caseNumber: string, skip = 0, limit = 10) {
-    const normalizedCaseNumber = this.normalizeCaseNumber(caseNumber);
-    const result = await this.elasticsearchService.search({
-      index: 'cases',
-      body: {
-        query: {
-          match: { number: normalizedCaseNumber },
-        },
-        from: skip,
-        size: limit,
-      },
-    });
-    return {
-      cases: result.hits.hits.map((hit) => hit._source),
-      total: result.hits.total['value'],
-    };
-  }
-
-  // Utility function to normalize the case number format
-  private normalizeCaseNumber(caseNumber: string): string {
-    // Regular expression to detect if "BVerfGE" is present at the end or beginning
-    if (/^\D+\d+,\d+$/.test(caseNumber)) {
-      return caseNumber; // Return as is if already formatted
-    }
-
-    // Attempt to extract components and normalize
-    const match = caseNumber.match(/(\D+)?\s*(\d+)\s*(\d+)\s*(\D+)?/);
-    if (match) {
-      const [, prefix1, number1, number2, prefix2] = match;
-      const prefix = prefix1 || prefix2 || ''; // Pick whichever prefix exists
-      return `${prefix.trim()}${number1},${number2}`;
-    }
-
-    // If no match, return the input unchanged
-    return caseNumber;
-  }
-
-  async searchCases(filter: FilterCasesQueryDto) {
-    const { searchTerm, startYear, endYear, decisionType } = filter;
-
-    const searchFieldsFirstPass = ['caseName', 'name_lemma']; // First search in caseName and name_lemma
-    const searchFieldsSecondPass = [];
-
-    // Build search fields based on selected boolean filters
-    if (filter.number) searchFieldsSecondPass.push('number');
-    if (filter.judgment)
-      searchFieldsSecondPass.push('judgment', 'judgment_lemma');
-    if (filter.facts) searchFieldsSecondPass.push('facts', 'facts_lemma');
-    if (filter.reasoning)
-      searchFieldsSecondPass.push('reasoning', 'reasoning_lemma');
-    if (filter.headnotes)
-      searchFieldsSecondPass.push('headnotes', 'headnotes_lemma');
-
+  async searchCasesByNumber(filter: FilterCasesQueryDto) {
+    const { searchTerm: caseNumber, startYear, endYear, decisionType } = filter;
+    const normalizedCaseNumber = normalizeCaseNumber(caseNumber);
     const sort: any = [{ citing_cases: { order: 'desc' } }];
-
-    const lemmatizedSearchTerm = await this.lemmatizeText(searchTerm);
-
-    // If no specific fields are selected, search across all fields in the second pass
-    if (searchFieldsSecondPass.length === 0) {
-      searchFieldsSecondPass.push(
-        'number',
-        'judgment',
-        'judgment_lemma',
-        'facts',
-        'facts_lemma',
-        'reasoning',
-        'reasoning_lemma',
-        'headnotes',
-        'headnotes_lemma',
-      );
-    }
-
-    let firstPassResults = [];
-    let secondPassResults = [];
 
     // Year range filter
     const yearRangeFilter =
@@ -221,93 +152,223 @@ export class CasesService implements OnModuleInit {
           }
         : null;
 
-    // If searchTerm exists, perform search in the appropriate fields
+    const firstQuery: any = {
+      bool: {
+        must: {
+          multi_match: {
+            query: normalizedCaseNumber,
+            fields: ['number'],
+            boost: 2,
+          },
+        },
+        filter: [yearRangeFilter, decisionTypeFilter].filter(Boolean),
+      },
+    };
+
+    const firstQueryResult = await this.elasticsearchService.search({
+      index: 'cases',
+      body: {
+        query: firstQuery,
+        sort,
+        from: 0,
+        size: 1000,
+      },
+    });
+
+    const firstQueryHits = firstQueryResult.hits.hits.map((hit) => hit._source);
+
+    const secondQuery: any = {
+      bool: {
+        must: {
+          multi_match: {
+            query: normalizedCaseNumber.replace(
+              /BVerfGE(\d+),(\d+)/,
+              'BVerfGE $1, $2',
+            ),
+            fields: ['judgment', 'facts', 'reasoning', 'headnotes'],
+            type: 'phrase',
+          },
+        },
+        filter: [yearRangeFilter, decisionTypeFilter].filter(Boolean),
+      },
+    };
+
+    const secondQueryResult = await this.elasticsearchService.search({
+      index: 'cases',
+      body: {
+        query: secondQuery,
+        sort,
+        from: 0,
+        size: 4000,
+      },
+    });
+
+    const secondQueryHits = secondQueryResult.hits.hits.map(
+      (hit) => hit._source,
+    );
+
+    const combinedResults = [
+      ...new Map(
+        [...firstQueryHits, ...secondQueryHits].map((item) => [
+          item['id'],
+          item,
+        ]),
+      ).values(),
+    ];
+
+    const total = combinedResults.length;
+    const from = filter.skip || 0;
+    const size = filter.limit || 10;
+    const paginatedResults = combinedResults.slice(from, from + size);
+
+    return {
+      cases: paginatedResults,
+      total,
+    };
+  }
+
+  async searchCases(filter: FilterCasesQueryDto) {
+    const { searchTerm, startYear, endYear, decisionType } = filter;
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+
+    const searchFieldsPass = [];
+    let updatedSearchTerm = searchTerm;
+    if (searchTerm && caseNumberPattern.test(searchTerm.trim())) {
+      updatedSearchTerm = normalizeCaseNumber(searchTerm);
+    }
+
+    // Build search fields based on selected boolean filters
+    if (filter.number) searchFieldsPass.push('number');
+    if (filter.judgment) searchFieldsPass.push('judgment', 'judgment_lemma');
+    if (filter.facts) searchFieldsPass.push('facts', 'facts_lemma');
+    if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
+    if (filter.headnotes) searchFieldsPass.push('headnotes', 'headnotes_lemma');
+
+    const sort: any = [{ citing_cases: { order: 'desc' } }];
+
+    const lemmatizedSearchTerm = await this.lemmatizeText(updatedSearchTerm);
+
+    // If no specific fields are selected, search across all fields in the second pass
+    if (searchFieldsPass.length === 0) {
+      searchFieldsPass.push(
+        'caseName',
+        'name_lemma',
+        'number',
+        'judgment',
+        'judgment_lemma',
+        'facts',
+        'facts_lemma',
+        'reasoning',
+        'reasoning_lemma',
+        'headnotes',
+        'headnotes_lemma',
+      );
+    }
+
+    let searchResults = [];
+
+    // Year range filter
+    const yearRangeFilter =
+      startYear || endYear
+        ? {
+            range: {
+              year: {
+                ...(startYear && { gte: startYear }),
+                ...(endYear && { lte: endYear }),
+              },
+            },
+          }
+        : null;
+
+    // Decision type filter
+    const decisionTypeFilter =
+      decisionType && decisionType.length > 0
+        ? {
+            terms: {
+              decision_type: decisionType,
+            },
+          }
+        : null;
+
     if (searchTerm) {
-      // First pass: Search only in caseName and name_lemma fields
-      const firstPassQuery: any = {
+      const baseFilter = {
         bool: {
+          filter: [] as any[],
+        },
+      };
+      if (yearRangeFilter) baseFilter.bool.filter.push(yearRangeFilter);
+      if (decisionTypeFilter) baseFilter.bool.filter.push(decisionTypeFilter);
+      const firstQuery: any = {
+        ...baseFilter,
+        bool: {
+          ...baseFilter.bool,
+          must: [
+            {
+              multi_match: {
+                query: updatedSearchTerm.trim(),
+                fields: searchFieldsPass,
+                type: 'phrase',
+              },
+            },
+          ],
+        },
+      };
+
+      const firstQueryResult = await this.elasticsearchService.search({
+        index: 'cases',
+        body: {
+          query: firstQuery,
+          sort: sort,
+        },
+        from: 0,
+        size: 4000,
+      });
+
+      const firstQueryHits = firstQueryResult.hits.hits.map(
+        (hit) => hit._source,
+      );
+      const secondQuery: any = {
+        ...baseFilter,
+        bool: {
+          ...baseFilter.bool,
           must: [
             {
               multi_match: {
                 query: lemmatizedSearchTerm,
-                fields: searchFieldsFirstPass,
-                fuzziness: 'AUTO',
+                fields: searchFieldsPass,
+                type: 'phrase',
               },
             },
           ],
-          filter: [],
         },
       };
 
-      // Add year and decision type filters if applicable
-      if (yearRangeFilter) firstPassQuery.bool.filter.push(yearRangeFilter);
-      if (decisionTypeFilter)
-        firstPassQuery.bool.filter.push(decisionTypeFilter);
-
-      this.logger.log(`First pass query: ${JSON.stringify(firstPassQuery)}`);
-
-      // Execute the first pass search
-      const firstPassResult = await this.elasticsearchService.search({
+      const secondQueryResult = await this.elasticsearchService.search({
         index: 'cases',
         body: {
-          query: firstPassQuery,
+          query: secondQuery,
           sort: sort,
         },
-        from: 0, // Fetch all results in the first pass
-        size: 1000, // Large batch to cover most cases
+        from: 0,
+        size: 4000,
       });
 
-      firstPassResults = firstPassResult.hits.hits.map((hit) => hit._source);
+      const secondQueryHits = secondQueryResult.hits.hits.map(
+        (hit) => hit._source,
+      );
 
-      // Second pass: Search in other fields
-      const secondPassQuery: any = {
-        bool: {
-          must: [
-            {
-              multi_match: {
-                query: lemmatizedSearchTerm,
-                fields: searchFieldsSecondPass,
-                fuzziness: 'AUTO',
-              },
-            },
-          ],
-          filter: [],
-        },
-      };
-
-      // Add year and decision type filters to the second pass as well
-      if (yearRangeFilter) secondPassQuery.bool.filter.push(yearRangeFilter);
-      if (decisionTypeFilter)
-        secondPassQuery.bool.filter.push(decisionTypeFilter);
-
-      this.logger.log(`Second pass query: ${JSON.stringify(secondPassQuery)}`);
-
-      // Execute the second pass search
-      const secondPassResult = await this.elasticsearchService.search({
-        index: 'cases',
-        body: {
-          query: secondPassQuery,
-          sort: sort,
-        },
-        from: 0, // Fetch all results in the second pass
-        size: 1000, // Large batch to cover most cases
-      });
-
-      secondPassResults = secondPassResult.hits.hits.map((hit) => hit._source);
       const combinedResults = [
-        ...new Map(
-          [...firstPassResults, ...secondPassResults].map((item) => [
-            item.id,
-            item,
-          ]),
-        ).values(),
+        ...firstQueryHits,
+        ...secondQueryHits.filter(
+          (item) => !firstQueryHits.some((hit) => hit['id'] === item['id']),
+        ),
       ];
 
-      // Pagination logic applied after deduplication
       const total = combinedResults.length;
       const from = filter.skip || 0;
       const size = filter.limit || 10;
-      const paginatedResults = combinedResults.slice(from, from + size); // Apply pagination after deduplication
+      const paginatedResults = combinedResults.slice(from, from + size);
 
       // Return the final results with proper pagination
       return {
@@ -349,9 +410,9 @@ export class CasesService implements OnModuleInit {
         size,
       });
 
-      secondPassResults = filterResult.hits.hits.map((hit) => hit._source);
+      searchResults = filterResult.hits.hits.map((hit) => hit._source);
       return {
-        cases: secondPassResults,
+        cases: searchResults,
         total: filterResult.hits.total['value'], // Use value for total hits, // Total number of combined results
       };
     }

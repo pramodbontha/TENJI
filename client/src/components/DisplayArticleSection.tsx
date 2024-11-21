@@ -6,20 +6,41 @@ import { useTranslation } from "react-i18next";
 interface DisplayArticleSectionProps {
   selectedArticle: Article;
   searchTerm: string;
+  lemmatizedSearchTerm?: string;
   openArticleModal: (article: Article) => void;
 }
 
 const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
-  const { selectedArticle, searchTerm, openArticleModal } = props;
+  const {
+    selectedArticle,
+    searchTerm,
+    lemmatizedSearchTerm,
+    openArticleModal,
+  } = props;
   const [adjustedText, setAdjustedText] = useState("");
   const articleProperties = [{ title: "text", text: selectedArticle.text }];
   const { t } = useTranslation();
 
+  const getHighlightedSearchTerms = () => {
+    const articleNumberPattern =
+      /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
+    if (articleNumberPattern.test(searchTerm)) {
+      const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
+      return [
+        searchTerm,
+        lemmatizedSearchTerm,
+        `Artikel ${extractedSearchTerm}`,
+      ];
+    }
+    return [searchTerm, lemmatizedSearchTerm];
+  };
+
   const includesQuery = (text: string | undefined) =>
     text &&
     text.trim() !== "" &&
-    searchTerm &&
-    text.toLowerCase().includes(searchTerm.toLowerCase());
+    [searchTerm, lemmatizedSearchTerm]
+      .filter(Boolean)
+      .some((term) => text.toLowerCase().includes(term!.toLowerCase()));
 
   const sectionWithQuery = articleProperties.find(({ text }) =>
     includesQuery(text)
@@ -42,10 +63,13 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
 
       const text = selectedSection.text;
 
-      if (includesQuery(text) && searchTerm) {
-        const searchIndex = text
-          .toLowerCase()
-          .indexOf(searchTerm.toLowerCase());
+      const searchTerms = getHighlightedSearchTerms().filter(Boolean);
+      const foundTerm = searchTerms.find((term) =>
+        text.toLowerCase().includes(term!.toLowerCase())
+      );
+
+      if (foundTerm) {
+        const searchIndex = text.toLowerCase().indexOf(foundTerm.toLowerCase());
 
         if (searchIndex > totalCharsVisible) {
           const start = Math.max(
@@ -66,10 +90,9 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   return (
     <>
       <div className="line-clamp-3">
-        <span className="font-bold mr-2">{selectedSection?.title}:</span>
         <Highlighter
           highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-          searchWords={[searchTerm || ""]}
+          searchWords={getHighlightedSearchTerms().filter(Boolean) as string[]}
           autoEscape={true}
           textToHighlight={adjustedText || ""}
         />

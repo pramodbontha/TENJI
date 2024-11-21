@@ -37,17 +37,19 @@ const ArticleModal = (props: ArticleModalProps) => {
         footer={null}
       >
         <div className="h-[520px]">
-          <div className="flex">
-            <div className="font-bold mr-2">{t("name")}:</div>
-            <div className="line-clamp-1">
-              <Highlighter
-                highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                searchWords={[searchBar.query]}
-                autoEscape={true}
-                textToHighlight={article.name}
-              />
+          {article.name && (
+            <div className="flex">
+              <div className="font-bold mr-2">{t("name")}:</div>
+              <div className="line-clamp-1">
+                <Highlighter
+                  highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                  searchWords={[searchBar.query]}
+                  autoEscape={true}
+                  textToHighlight={article.name}
+                />
+              </div>
             </div>
-          </div>
+          )}
           <Tabs defaultActiveKey="1" className="h-full">
             <Tabs.TabPane tab={t("summary")} key="1" className="h-full">
               <div className="h-[450px] overflow-y-auto scrollbar-rounded">

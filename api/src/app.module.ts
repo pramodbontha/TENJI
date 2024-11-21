@@ -9,6 +9,7 @@ import { Neo4jModule } from './neo4j/neo4j.module';
 import { BooksModule } from './books/books.module';
 // import { ElasticSearchModule } from './elastic-search/elastic-search.module';
 // import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BooksModule } from './books/books.module';
     CitationsModule,
     ReferencesModule,
     BooksModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

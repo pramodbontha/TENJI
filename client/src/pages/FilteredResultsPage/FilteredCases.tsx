@@ -23,7 +23,9 @@ const FilteredCases = () => {
   );
   const { citationsMenu } = useAppSelector((state) => state.citations);
 
-  const searchBar = useAppSelector((state: RootState) => state.searchBar);
+  const { query, lemmatizedQuery } = useAppSelector(
+    (state: RootState) => state.searchBar
+  );
 
   const values = useAppSelector((state: RootState) => state.form);
   const dispatch = useAppDispatch();
@@ -44,7 +46,7 @@ const FilteredCases = () => {
     }
     try {
       const { data: filteredCases } = await fetchFilteredCases({
-        searchTerm: searchBar.query,
+        searchTerm: query,
         name: values.caseName,
         number: values.caseNumber,
         judgment: values.caseJudgement,
@@ -95,7 +97,8 @@ const FilteredCases = () => {
                 <CaseCard
                   cases={cases}
                   isSearchResult={true}
-                  searchTerm={searchBar.query}
+                  searchTerm={query}
+                  lemmatizedSearchTerm={lemmatizedQuery}
                   openCaseModal={openCaseModal}
                   openCitationModal={openCitationModal}
                 />

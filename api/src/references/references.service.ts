@@ -44,7 +44,7 @@ export class ReferencesService implements OnModuleInit {
       MATCH (r:Reference) 
       OPTIONAL MATCH (r)-[:MENTIONS]->(a:Article) 
       OPTIONAL MATCH (r)-[:MENTIONS]->(c:Case)
-      RETURN r
+      RETURN r, id(r) AS referenceId
     `;
 
       const result = await this.neo4jService.runQuery(query);
@@ -53,19 +53,20 @@ export class ReferencesService implements OnModuleInit {
 
       for (const record of result) {
         const referenceData = record.get('r').properties;
+        const referenceId = record.get('referenceId');
 
         // No need to lemmatize fields during indexing.
         // Just index the original fields in Elasticsearch.
 
         const referenceToIndex = {
           ...referenceData, // Store original reference name and other fields
-          // Add more fields to index here
+          referenceId,
         };
 
         references.push(referenceToIndex);
         await this.elasticsearchService.index({
           index: 'references',
-          id: referenceToIndex.id,
+          id: referenceToIndex.referenceId,
           body: referenceToIndex,
         });
       }
@@ -120,14 +121,38 @@ export class ReferencesService implements OnModuleInit {
     if (filter.context) searchFields.push('context');
     if (filter.text) searchFields.push('text');
 
-    if (lemmatizedSearchTerm && lemmatizedSearchTerm.trim() !== '') {
-      query.bool.must.push({
-        multi_match: {
-          query: lemmatizedSearchTerm,
-          fields: ['context', 'text'],
-          fuzziness: 'AUTO',
-        },
-      });
+    if (
+      filter.searchTerm &&
+      lemmatizedSearchTerm &&
+      lemmatizedSearchTerm.trim() !== ''
+    ) {
+      query.bool = {
+        should: [
+          {
+            multi_match: {
+              query: filter.searchTerm,
+              fields: ['text'],
+              type: 'phrase',
+              boost: 3,
+            },
+          },
+          {
+            multi_match: {
+              query: filter.searchTerm,
+              fields: ['text', 'context'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            multi_match: {
+              query: lemmatizedSearchTerm.trim(),
+              fields: ['context', 'text'],
+              type: 'phrase',
+            },
+          },
+        ],
+      };
     } else {
       query.bool.must.push({
         match_all: {},

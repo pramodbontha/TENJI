@@ -13,6 +13,7 @@ import { searchBarReducer } from "@/slices/SearchBarSlice";
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { appTourReducer } from "@/slices/AppTourSlice";
+import { commonApi } from "@/services/CommonApi";
 
 export const store = configureStore({
   reducer: {
@@ -21,6 +22,7 @@ export const store = configureStore({
     [bookApi.reducerPath]: bookApi.reducer,
     [referenceApi.reducerPath]: referenceApi.reducer,
     [citationsApi.reducerPath]: citationsApi.reducer,
+    [commonApi.reducerPath]: commonApi.reducer,
     articles: articleReducer,
     cases: caseReducer,
     references: referenceReducer,
@@ -36,7 +38,8 @@ export const store = configureStore({
       caseApi.middleware,
       bookApi.middleware,
       referenceApi.middleware,
-      citationsApi.middleware
+      citationsApi.middleware,
+      commonApi.middleware
     ),
 });
 

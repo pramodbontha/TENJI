@@ -51,6 +51,7 @@ const CaseModal = (props: CaseModalProps) => {
                         searchWords={[
                           searchBar.query || "",
                           citationSearch || "",
+                          searchBar.lemmatizedQuery || "",
                         ]}
                         autoEscape={true}
                         textToHighlight={cases.judgment}
@@ -64,6 +65,7 @@ const CaseModal = (props: CaseModalProps) => {
                         searchWords={[
                           searchBar.query || "",
                           citationSearch || "",
+                          searchBar.lemmatizedQuery || "",
                         ]}
                         autoEscape={true}
                         textToHighlight={cases.headnotes}
@@ -76,7 +78,11 @@ const CaseModal = (props: CaseModalProps) => {
                 <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
                   <Highlighter
                     highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                    searchWords={[searchBar.query || "", citationSearch || ""]}
+                    searchWords={[
+                      searchBar.query || "",
+                      citationSearch || "",
+                      searchBar.lemmatizedQuery || "",
+                    ]}
                     autoEscape={true}
                     textToHighlight={cases.facts}
                   />
@@ -87,7 +93,11 @@ const CaseModal = (props: CaseModalProps) => {
                 <div className="h-[450px] w-auto overflow-y-auto overflow-x-hidden scrollbar-rounded">
                   <Highlighter
                     highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                    searchWords={[searchBar.query || "", citationSearch || ""]}
+                    searchWords={[
+                      searchBar.query || "",
+                      citationSearch || "",
+                      searchBar.lemmatizedQuery || "",
+                    ]}
                     autoEscape={true}
                     textToHighlight={cases.reasoning}
                   />

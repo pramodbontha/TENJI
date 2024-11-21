@@ -18,12 +18,13 @@ import {
 import { useLazyGetFilteredCasesQuery } from "@/services/CaseApi";
 import { setCaseCount, setCases } from "@/slices/CaseSlice";
 import { setReferenceCount, setReferences } from "@/slices/ReferenceSlice";
-import { setQuery } from "@/slices/SearchBarSlice";
+import { setLemmatizedQuery, setQuery } from "@/slices/SearchBarSlice";
 import _ from "lodash";
 import { setFormValues } from "@/slices/FormSlice";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/redux/store";
+import { useLazyGetLemmatizedQueryQuery } from "@/services/CommonApi";
 
 const SearchBar = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const SearchBar = () => {
   const [fetchFilteredCases] = useLazyGetFilteredCasesQuery();
   const [fetchFilteredReferences] =
     useLazyGetFilteredReferencesWithQueriesQuery();
+  const [fetchLemmatizedQuery] = useLazyGetLemmatizedQueryQuery();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
 
@@ -72,6 +74,11 @@ const SearchBar = () => {
   const handleSearch = async () => {
     try {
       dispatch(setQuery(searchTerm));
+
+      const lemmatizedQuery = await fetchLemmatizedQuery(searchTerm);
+      console.log(lemmatizedQuery);
+      lemmatizedQuery.data &&
+        dispatch(setLemmatizedQuery(lemmatizedQuery.data));
       dispatch(setIsArticleLoading(true));
       clearCache();
       navigate("/search");

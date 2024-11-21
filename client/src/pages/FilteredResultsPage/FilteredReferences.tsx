@@ -4,6 +4,7 @@ import { RootState } from "@/redux/store";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { setReferences } from "@/slices/ReferenceSlice";
 import { Reference } from "@/types";
+import { normalizeCaseNumber } from "@/utils/helpers";
 import { Button, Card, Col, Pagination, PaginationProps, Row } from "antd";
 import { useState } from "react";
 import Highlighter from "react-highlight-words";
@@ -56,6 +57,22 @@ const FilteredReferences = () => {
     setIsBookModalOpen(true);
   };
 
+  const getHighlightedSearchTerms = () => {
+    const { query, lemmatizedQuery } = searchBar;
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+    if (caseNumberPattern.test(query || "")) {
+      const formattedCaseNumber = normalizeCaseNumber(query);
+      return [
+        query,
+        lemmatizedQuery,
+        formattedCaseNumber,
+        formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
+      ];
+    }
+    return [query, lemmatizedQuery];
+  };
+
   return (
     <>
       <div className="pt-0 pl-4 pr-4">
@@ -81,7 +98,9 @@ const FilteredReferences = () => {
                   title={
                     <Highlighter
                       highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                      searchWords={[searchBar.query]}
+                      searchWords={
+                        getHighlightedSearchTerms().filter(Boolean) as string[]
+                      }
                       autoEscape={true}
                       textToHighlight={reference.text}
                     />
@@ -98,7 +117,11 @@ const FilteredReferences = () => {
                     <div className="line-clamp-3">
                       <Highlighter
                         highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                        searchWords={[searchBar.query]}
+                        searchWords={
+                          getHighlightedSearchTerms().filter(
+                            Boolean
+                          ) as string[]
+                        }
                         autoEscape={true}
                         textToHighlight={reference.context}
                       />

@@ -1,4 +1,5 @@
 import { ICase } from "@/types";
+import { normalizeCaseNumber } from "@/utils/helpers";
 import { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
@@ -6,12 +7,14 @@ import { useTranslation } from "react-i18next";
 interface DisplayCaseSectionProps {
   selectedCase: ICase;
   searchTerm?: string;
+  lemmatizedSearchTerm?: string;
   openCaseModal: (cases: ICase) => void;
 }
 
 const DisplayCaseSection = ({
   selectedCase,
   searchTerm,
+  lemmatizedSearchTerm,
   openCaseModal,
 }: DisplayCaseSectionProps) => {
   const [adjustedText, setAdjustedText] = useState("");
@@ -23,11 +26,28 @@ const DisplayCaseSection = ({
     { title: t("headnotes"), text: selectedCase.headnotes },
   ];
 
+  const getHighlightedSearchTerms = () => {
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+    if (caseNumberPattern.test(searchTerm || "")) {
+      const formattedCaseNumber = normalizeCaseNumber(searchTerm);
+      return [
+        searchTerm,
+        lemmatizedSearchTerm,
+        formattedCaseNumber,
+        formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
+      ];
+    }
+    return [searchTerm, lemmatizedSearchTerm];
+  };
+
   const includesQuery = (text: string | undefined) =>
     text &&
     text.trim() !== "" &&
-    searchTerm &&
-    text.toLowerCase().includes(searchTerm.toLowerCase());
+    (searchTerm || lemmatizedSearchTerm) &&
+    getHighlightedSearchTerms()
+      .filter(Boolean)
+      .some((term) => text.toLowerCase().includes(term!.toLowerCase()));
 
   const sectionWithQuery = caseProperties.find(({ text }) =>
     includesQuery(text)
@@ -50,10 +70,13 @@ const DisplayCaseSection = ({
 
       const text = selectedSection.text;
 
-      if (includesQuery(text) && searchTerm) {
-        const searchIndex = text
-          .toLowerCase()
-          .indexOf(searchTerm.toLowerCase());
+      const searchTerms = getHighlightedSearchTerms().filter(Boolean);
+      const foundTerm = searchTerms.find((term) =>
+        text.toLowerCase().includes(term!.toLowerCase())
+      );
+
+      if (foundTerm) {
+        const searchIndex = text.toLowerCase().indexOf(foundTerm.toLowerCase());
 
         if (searchIndex > totalCharsVisible) {
           const start = Math.max(
@@ -71,13 +94,14 @@ const DisplayCaseSection = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSection, searchTerm]);
+
   return (
     <>
       <div className="line-clamp-3">
         <span className="font-bold mr-2">{selectedSection?.title}:</span>
         <Highlighter
           highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-          searchWords={[searchTerm || ""]}
+          searchWords={getHighlightedSearchTerms().filter(Boolean) as string[]}
           autoEscape={true}
           textToHighlight={adjustedText || ""}
         />

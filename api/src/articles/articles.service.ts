@@ -3,6 +3,7 @@ import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { FilterArticlesQueryDto } from './dto/filter-articles-query.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
+import { normalizeCaseNumber } from 'src/utils/helpers';
 
 @Injectable()
 export class ArticlesService implements OnModuleInit {
@@ -123,52 +124,144 @@ export class ArticlesService implements OnModuleInit {
     }
   }
 
+  public async searchArticlesByNumber(filter: FilterArticlesQueryDto) {
+    const { searchTerm } = filter;
+    const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
+    const sort: any = [{ citing_cases: { order: 'desc' } }];
+    const firstQuery: any = {
+      bool: {
+        must: [
+          {
+            multi_match: {
+              query: extractedSearchTerm,
+              fields: ['number'],
+            },
+          },
+        ],
+      },
+    };
+    const firstQueryResult = await this.elasticsearchService.search({
+      index: 'articles',
+      body: {
+        query: firstQuery,
+        sort,
+        from: 0,
+        size: 1000,
+      },
+    });
+
+    const firstQueryHits = firstQueryResult.hits.hits.map((hit) => hit._source);
+    console.log('First query hits', firstQueryHits);
+
+    console.log(`Artikel ${extractedSearchTerm}`);
+
+    const secondQuery: any = {
+      bool: {
+        must: [
+          {
+            multi_match: {
+              query: `Artikel ${extractedSearchTerm}`,
+              fields: [
+                'name',
+                'name_lemma',
+                'name.keyword',
+                'text',
+                'text_lemma',
+              ],
+              type: 'phrase',
+            },
+          },
+        ],
+      },
+    };
+    const secondQueryResult = await this.elasticsearchService.search({
+      index: 'articles',
+      body: {
+        query: secondQuery,
+        sort,
+        from: 0,
+        size: 4000,
+      },
+    });
+
+    const secondQueryHits = secondQueryResult.hits.hits.map(
+      (hit) => hit._source,
+    );
+
+    // const combinedResults = [
+    //   ...new Map(
+    //     [...firstQueryHits, ...secondQueryHits].map((item) => [
+    //       item['id'],
+    //       item,
+    //     ]),
+    //   ).values(),
+    // ];
+
+    const combinedResults = firstQueryHits.concat(secondQueryHits);
+
+    const total = combinedResults.length;
+    const from = filter.skip || 0;
+    const size = filter.limit || 10;
+    const paginatedResults = combinedResults.slice(from, from + size);
+
+    return {
+      articles: paginatedResults,
+      total,
+    };
+  }
+
   async searchArticles(filter: FilterArticlesQueryDto) {
     // Trim the search term
-    const trimmedSearchTerm = filter.searchTerm?.trim();
+    let trimmedSearchTerm = filter.searchTerm?.trim();
 
-    // Regex to identify article numbers (not in brackets, allowing optional whitespace and abbreviations)
-    const articleNumberPattern =
-      /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
 
-    const query: any = {
+    if (caseNumberPattern.test(trimmedSearchTerm)) {
+      trimmedSearchTerm = normalizeCaseNumber(trimmedSearchTerm);
+    }
+
+    const searchFilelds = [
+      'name',
+      'name_lemma',
+      'name.keyword',
+      'text',
+      'text_lemma',
+    ];
+
+    const textFieldsQuery: any = {
       bool: {
         must: [],
       },
     };
-
     // Check if the search term matches the article number pattern
-    if (trimmedSearchTerm && articleNumberPattern.test(trimmedSearchTerm)) {
-      query.bool.must.push({
-        match: {
-          number: {
-            query: trimmedSearchTerm.replace(/\s+/g, ' ').trim(), // Normalize whitespace
-            fuzziness: 'AUTO',
-          },
-        },
-      });
-    } else {
-      // If not an article number, perform lemmatized search
-      if (trimmedSearchTerm) {
-        const lemmatizedSearchTerm =
-          await this.lemmatizeText(trimmedSearchTerm);
-        console.log('Lemmatized search term:', lemmatizedSearchTerm);
+    this.logger.log(
+      `Search term: ${trimmedSearchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0]}`,
+    );
 
-        query.bool.must.push({
-          multi_match: {
-            query: lemmatizedSearchTerm || trimmedSearchTerm,
-            fields: [
-              'name',
-              'name_lemma',
-              'name.keyword',
-              'text',
-              'text_lemma',
-            ],
-            fuzziness: 'AUTO',
-            minimum_should_match: '70%',
+    // If not an article number, perform lemmatized search
+    if (trimmedSearchTerm) {
+      const lemmatizedSearchTerm = await this.lemmatizeText(trimmedSearchTerm);
+
+      textFieldsQuery.bool = {
+        should: [
+          {
+            multi_match: {
+              query: trimmedSearchTerm,
+              fields: searchFilelds,
+              boost: 2,
+              type: 'phrase',
+            },
           },
-        });
-      }
+          {
+            multi_match: {
+              query: lemmatizedSearchTerm,
+              fields: searchFilelds,
+              type: 'phrase',
+            },
+          },
+        ],
+      };
     }
 
     // Apply sorting (e.g., by citing_cases in descending order)
@@ -179,12 +272,14 @@ export class ArticlesService implements OnModuleInit {
     const size = filter.limit || 10;
 
     // Execute the search query with sorting and pagination
-    this.logger.log(`Searching articles with query: ${JSON.stringify(query)}`);
+    this.logger.log(
+      `Searching articles with query: ${JSON.stringify(textFieldsQuery)}`,
+    );
 
     const result = await this.elasticsearchService.search({
       index: 'articles',
       body: {
-        query,
+        query: textFieldsQuery,
         sort,
         _source: {
           excludes: ['name_lemma', 'text_lemma'], // Exclude these fields from the response

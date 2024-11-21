@@ -37,18 +37,12 @@ export class CasesController {
         /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i; // The 'i' flag makes it case-insensitive
       const searchTerm = filterDto.searchTerm || ''; // Use searchTerm from DTO
 
-      if (caseNumberPattern.test(searchTerm.trim())) {
+      if (filterDto.searchTerm && caseNumberPattern.test(searchTerm.trim())) {
         // If query matches case number format, search by case number
-        console.log('Searching by case number');
-        const cases = await this.casesService.searchCasesByNumber(
-          searchTerm,
-          filterDto.skip,
-          filterDto.limit,
-        );
+        const cases = await this.casesService.searchCasesByNumber(filterDto);
         return cases; // Indicate type of search in response
       } else {
         // Otherwise, perform a lemmatized search
-        console.log('Searching by lemmatized query');
         const cases = await this.casesService.searchCases(filterDto);
         return cases;
       }
@@ -79,10 +73,5 @@ export class CasesController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  @Get('/search-by-number')
-  async searchCaseByNumber(@Query('number') caseNumber: string) {
-    return this.casesService.searchCasesByNumber(caseNumber);
   }
 }

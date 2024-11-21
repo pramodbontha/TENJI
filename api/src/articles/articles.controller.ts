@@ -34,8 +34,22 @@ export class ArticlesController {
     @Query() filterDto: FilterArticlesQueryDto,
   ) {
     try {
-      const articles = await this.articlesService.searchArticles(filterDto);
-      return articles;
+      const articleNumberPattern =
+        /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
+
+      const isArticleNumber = filterDto.searchTerm
+        ? articleNumberPattern.test(filterDto.searchTerm.trim())
+        : false;
+
+      if (isArticleNumber) {
+        console.log('Searching by article number');
+        const articles =
+          await this.articlesService.searchArticlesByNumber(filterDto);
+        return articles;
+      } else {
+        const articles = await this.articlesService.searchArticles(filterDto);
+        return articles;
+      }
     } catch (error) {
       throw new HttpException(
         {

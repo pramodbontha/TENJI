@@ -9,6 +9,7 @@ interface ArticleCardProps {
   article: Article;
   isSearchResult?: boolean;
   searchTerm?: string;
+  lemmatizedSearchTerm?: string;
   openArticleModal: (article: Article) => void;
   openCitationModal: (article: Article) => void;
 }
@@ -18,6 +19,7 @@ const ArticleCard = (props: ArticleCardProps) => {
     article,
     isSearchResult,
     searchTerm,
+    lemmatizedSearchTerm,
     openArticleModal,
     openCitationModal,
   } = props;
@@ -29,7 +31,13 @@ const ArticleCard = (props: ArticleCardProps) => {
         title={
           <Highlighter
             highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-            searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
+            searchWords={
+              isSearchResult && searchTerm
+                ? ([searchTerm, lemmatizedSearchTerm].filter(
+                    Boolean
+                  ) as string[])
+                : []
+            }
             autoEscape={true}
             textToHighlight={
               article.name
@@ -54,8 +62,7 @@ const ArticleCard = (props: ArticleCardProps) => {
       >
         {article.name && (
           <div className="flex line-clamp-1 -mt-3">
-            <div className="font-bold mr-2">{t("number")}:</div>
-            <div className="line-clamp-1 ">
+            <div className="line-clamp-1 font-semibold">
               <Highlighter
                 highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
                 searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
@@ -70,6 +77,9 @@ const ArticleCard = (props: ArticleCardProps) => {
             openArticleModal={openArticleModal}
             selectedArticle={article}
             searchTerm={isSearchResult && searchTerm ? searchTerm : ""}
+            lemmatizedSearchTerm={
+              isSearchResult && lemmatizedSearchTerm ? lemmatizedSearchTerm : ""
+            }
           />
         </div>
       </Card>
