@@ -5,6 +5,7 @@ const searchBarSlice = createSlice({
   initialState: {
     query: "",
     lemmatizedQuery: "",
+    citationQuery: "",
   },
   reducers: {
     setQuery: (state, action: PayloadAction<string>) => {
@@ -13,9 +14,13 @@ const searchBarSlice = createSlice({
     setLemmatizedQuery: (state, action: PayloadAction<string>) => {
       state.lemmatizedQuery = action.payload;
     },
+    setCitationQuery: (state, action: PayloadAction<string>) => {
+      state.citationQuery = action.payload;
+    },
   },
 });
 
-export const { setQuery, setLemmatizedQuery } = searchBarSlice.actions;
+export const { setQuery, setLemmatizedQuery, setCitationQuery } =
+  searchBarSlice.actions;
 
 export const searchBarReducer = searchBarSlice.reducer;

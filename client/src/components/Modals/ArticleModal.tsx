@@ -26,7 +26,8 @@ const ArticleModal = (props: ArticleModalProps) => {
             searchWords={[searchBar.query]}
             autoEscape={true}
             textToHighlight={`${t("article-number")}: ${articleNumberFormatter(
-              article.number
+              article.number,
+              article.resource
             )}`}
           />
         }

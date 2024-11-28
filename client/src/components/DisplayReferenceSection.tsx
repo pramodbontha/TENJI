@@ -1,19 +1,22 @@
-import { Article } from "@/types";
+import { Reference } from "@/types";
 import { useEffect, useState } from "react";
 import { SearchTermHighlighter } from "@/components";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/redux/store";
 import { useAppSelector } from "@/redux/hooks";
+import { normalizeCaseNumber } from "@/utils/helpers";
 
-interface DisplayArticleSectionProps {
-  selectedArticle: Article;
-  openArticleModal: (article: Article) => void;
+interface DisplayReferenceSectionProps {
+  selectedReference: Reference;
+  openReferenceModal: (reference: Reference) => void;
 }
 
-const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
-  const { selectedArticle, openArticleModal } = props;
+const DisplayReferenceSection = (props: DisplayReferenceSectionProps) => {
+  const { selectedReference, openReferenceModal } = props;
   const [adjustedText, setAdjustedText] = useState("");
-  const articleProperties = [{ title: "text", text: selectedArticle.text }];
+  const referenceProperties = [
+    { title: "context", text: selectedReference.context },
+  ];
   const {
     query: searchTerm,
     lemmatizedQuery: lemmatizedSearchTerm,
@@ -22,15 +25,16 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   const { t } = useTranslation();
 
   const getHighlightedSearchTerms = () => {
-    const articleNumberPattern =
-      /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
-    if (articleNumberPattern.test(searchTerm)) {
-      const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+    if (caseNumberPattern.test(searchTerm || "")) {
+      const formattedCaseNumber = normalizeCaseNumber(searchTerm);
       return [
         searchTerm,
         lemmatizedSearchTerm,
         citationQuery,
-        `Artikel ${extractedSearchTerm}`,
+        formattedCaseNumber,
+        formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
       ];
     }
     return [searchTerm, lemmatizedSearchTerm, citationQuery];
@@ -39,15 +43,15 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   const includesQuery = (text: string | undefined) =>
     text &&
     text.trim() !== "" &&
-    [searchTerm, lemmatizedSearchTerm, citationQuery]
+    getHighlightedSearchTerms()
       .filter(Boolean)
       .some((term) => text.toLowerCase().includes(term!.toLowerCase()));
 
-  const sectionWithQuery = articleProperties.find(({ text }) =>
+  const sectionWithQuery = referenceProperties.find(({ text }) =>
     includesQuery(text)
   );
 
-  const sectionWithText = articleProperties.find(
+  const sectionWithText = referenceProperties.find(
     ({ text }) => text && text.trim() !== ""
   );
 
@@ -99,7 +103,7 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
         />
         <span
           className="text-black-500 font-medium underline cursor-pointer ml-1"
-          onClick={() => openArticleModal(selectedArticle)}
+          onClick={() => openReferenceModal(selectedReference)}
         >
           {t("more")}
         </span>
@@ -108,4 +112,4 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   );
 };
 
-export default DisplayArticleSection;
+export default DisplayReferenceSection;

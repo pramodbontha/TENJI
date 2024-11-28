@@ -1,5 +1,5 @@
 import { IsOptional, IsBoolean, IsInt, Min, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class FilterArticlesQueryDto {
   @IsOptional()
@@ -8,17 +8,17 @@ export class FilterArticlesQueryDto {
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   name?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   number?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   text?: boolean;
 
   @IsOptional()

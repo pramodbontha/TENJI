@@ -6,7 +6,7 @@ import {
   IsArray,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class FilterReferencesQueryDto {
   @IsOptional()
@@ -15,12 +15,12 @@ export class FilterReferencesQueryDto {
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   context?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   text?: boolean;
 
   @IsOptional()
@@ -31,7 +31,7 @@ export class FilterReferencesQueryDto {
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   refCasesArticles?: boolean;
 
   @IsOptional()

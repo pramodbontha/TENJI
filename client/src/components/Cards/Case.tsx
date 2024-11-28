@@ -1,50 +1,53 @@
 import { ICase } from "@/types";
-import { Button, Card, Space } from "antd";
+import { Button, Card, Space, Popover } from "antd";
 import { useTranslation } from "react-i18next";
-import { DisplayCaseSection } from "..";
-import Highlighter from "react-highlight-words";
+import { DisplayCaseSection, SearchTermHighlighter } from "@/components";
 import { caseNumberFormatter } from "@/utils/helpers";
+import { RootState } from "@/redux/store";
+import { useAppSelector } from "@/redux/hooks";
 
 interface CaseCardProps {
   cases: ICase;
   isSearchResult?: boolean;
-  searchTerm?: string;
-  lemmatizedSearchTerm?: string;
   openCaseModal: (cases: ICase) => void;
   openCitationModal: (cases: ICase) => void;
 }
 
 const CaseCard = (props: CaseCardProps) => {
-  const {
-    cases,
-    isSearchResult,
-    searchTerm,
-    lemmatizedSearchTerm,
-    openCaseModal,
-    openCitationModal,
-  } = props;
+  const { cases, isSearchResult, openCaseModal, openCitationModal } = props;
+  const { query, lemmatizedQuery, citationQuery } = useAppSelector(
+    (state: RootState) => state.searchBar
+  );
   const { t } = useTranslation();
 
+  const getHighlightTerms = () => {
+    if (isSearchResult) {
+      return [query, lemmatizedQuery, citationQuery].filter(
+        Boolean
+      ) as string[];
+    }
+    return [];
+  };
   return (
     <>
       <Card
         title={
-          <Highlighter
-            highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-            searchWords={
-              isSearchResult && searchTerm
-                ? ([searchTerm, lemmatizedSearchTerm].filter(
-                    Boolean
-                  ) as string[])
-                : []
-            }
-            autoEscape={true}
-            textToHighlight={
+          <Popover
+            content={
               cases.caseName
                 ? cases.caseName
                 : caseNumberFormatter(cases.number)
             }
-          />
+          >
+            <SearchTermHighlighter
+              searchWords={getHighlightTerms()}
+              textToHighlight={
+                cases.caseName
+                  ? cases.caseName
+                  : caseNumberFormatter(cases.number)
+              }
+            />
+          </Popover>
         }
         extra={
           <>
@@ -64,10 +67,8 @@ const CaseCard = (props: CaseCardProps) => {
           {cases.caseName && (
             <>
               <div className="line-clamp-1 font-semibold">
-                <Highlighter
-                  highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                  searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
-                  autoEscape={true}
+                <SearchTermHighlighter
+                  searchWords={getHighlightTerms()}
                   textToHighlight={caseNumberFormatter(cases.number)}
                 />
               </div>
@@ -91,10 +92,6 @@ const CaseCard = (props: CaseCardProps) => {
         <div className="line-clamp-3 mt-1">
           <DisplayCaseSection
             selectedCase={cases}
-            searchTerm={isSearchResult && searchTerm ? searchTerm : ""}
-            lemmatizedSearchTerm={
-              isSearchResult && lemmatizedSearchTerm ? lemmatizedSearchTerm : ""
-            }
             openCaseModal={openCaseModal}
           />
         </div>

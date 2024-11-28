@@ -112,6 +112,7 @@ export class ArticlesService implements OnModuleInit {
                   keyword: { type: 'keyword' }, // For exact matching
                 },
               },
+              resource: { type: 'text' },
               name_lemma: { type: 'text' }, // Lemmatized field
               text_lemma: { type: 'text' }, // Lemmatized field
             },
@@ -151,23 +152,22 @@ export class ArticlesService implements OnModuleInit {
     });
 
     const firstQueryHits = firstQueryResult.hits.hits.map((hit) => hit._source);
-    console.log('First query hits', firstQueryHits);
 
-    console.log(`Artikel ${extractedSearchTerm}`);
+    let lemmatizedSearchTerm = '';
+
+    if (firstQueryHits.length > 0) {
+      lemmatizedSearchTerm = await this.lemmatizeText(
+        firstQueryHits[0]['name'],
+      );
+    }
 
     const secondQuery: any = {
       bool: {
         must: [
           {
             multi_match: {
-              query: `Artikel ${extractedSearchTerm}`,
-              fields: [
-                'name',
-                'name_lemma',
-                'name.keyword',
-                'text',
-                'text_lemma',
-              ],
+              query: lemmatizedSearchTerm,
+              fields: ['name', 'name_lemma', 'name.keyword'],
               type: 'phrase',
             },
           },
@@ -188,16 +188,45 @@ export class ArticlesService implements OnModuleInit {
       (hit) => hit._source,
     );
 
-    // const combinedResults = [
-    //   ...new Map(
-    //     [...firstQueryHits, ...secondQueryHits].map((item) => [
-    //       item['id'],
-    //       item,
-    //     ]),
-    //   ).values(),
-    // ];
+    const thirdQuery: any = {
+      bool: {
+        must: [
+          {
+            multi_match: {
+              query: `Artikel ${extractedSearchTerm}`,
+              fields: ['text', 'text_lemma'],
+              type: 'phrase',
+            },
+          },
+        ],
+      },
+    };
 
-    const combinedResults = firstQueryHits.concat(secondQueryHits);
+    const thirdQueryResult = await this.elasticsearchService.search({
+      index: 'articles',
+      body: {
+        query: thirdQuery,
+        sort,
+        from: 0,
+        size: 1000,
+      },
+    });
+
+    const thirdQueryHits = thirdQueryResult.hits.hits
+      .map((hit) => hit._source)
+      .sort((a, b) => {
+        const aHasName = a['name'] ? 1 : 0;
+        const bHasName = b['name'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
+
+    const combinedResults = [
+      ...new Map(
+        [...firstQueryHits, ...secondQueryHits, ...thirdQueryHits].map(
+          (item) => [item['number'], item],
+        ),
+      ).values(),
+    ];
 
     const total = combinedResults.length;
     const from = filter.skip || 0;
@@ -214,6 +243,8 @@ export class ArticlesService implements OnModuleInit {
     // Trim the search term
     let trimmedSearchTerm = filter.searchTerm?.trim();
 
+    let searchFieldsPass = [];
+
     const caseNumberPattern =
       /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
 
@@ -221,23 +252,27 @@ export class ArticlesService implements OnModuleInit {
       trimmedSearchTerm = normalizeCaseNumber(trimmedSearchTerm);
     }
 
-    const searchFilelds = [
-      'name',
-      'name_lemma',
-      'name.keyword',
-      'text',
-      'text_lemma',
-    ];
+    if (filter.name)
+      searchFieldsPass.push('name', 'name_lemma', 'name.keyword');
+    if (filter.text) searchFieldsPass.push('text', 'text_lemma');
+
+    this.logger.log(`Search fields: ${searchFieldsPass}`);
+
+    if (searchFieldsPass.length === 0) {
+      searchFieldsPass = [
+        'name',
+        'name_lemma',
+        'name.keyword',
+        'text',
+        'text_lemma',
+      ];
+    }
 
     const textFieldsQuery: any = {
       bool: {
         must: [],
       },
     };
-    // Check if the search term matches the article number pattern
-    this.logger.log(
-      `Search term: ${trimmedSearchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0]}`,
-    );
 
     // If not an article number, perform lemmatized search
     if (trimmedSearchTerm) {
@@ -248,7 +283,7 @@ export class ArticlesService implements OnModuleInit {
           {
             multi_match: {
               query: trimmedSearchTerm,
-              fields: searchFilelds,
+              fields: searchFieldsPass,
               boost: 2,
               type: 'phrase',
             },
@@ -256,7 +291,7 @@ export class ArticlesService implements OnModuleInit {
           {
             multi_match: {
               query: lemmatizedSearchTerm,
-              fields: searchFilelds,
+              fields: searchFieldsPass,
               type: 'phrase',
             },
           },

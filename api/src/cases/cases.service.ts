@@ -126,8 +126,29 @@ export class CasesService implements OnModuleInit {
 
   async searchCasesByNumber(filter: FilterCasesQueryDto) {
     const { searchTerm: caseNumber, startYear, endYear, decisionType } = filter;
+    const searchFieldsPass = [];
+    let isFiltersEmpty = true;
     const normalizedCaseNumber = normalizeCaseNumber(caseNumber);
+    if (filter.judgment) searchFieldsPass.push('judgment', 'judgment_lemma');
+    if (filter.facts) searchFieldsPass.push('facts', 'facts_lemma');
+    if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
+    if (filter.headnotes) searchFieldsPass.push('headnotes', 'headnotes_lemma');
     const sort: any = [{ citing_cases: { order: 'desc' } }];
+
+    if (searchFieldsPass.length === 0) {
+      searchFieldsPass.push(
+        'judgment',
+        'judgment_lemma',
+        'facts',
+        'facts_lemma',
+        'reasoning',
+        'reasoning_lemma',
+        'headnotes',
+        'headnotes_lemma',
+      );
+    } else if (searchFieldsPass.length > 0) {
+      isFiltersEmpty = false;
+    }
 
     // Year range filter
     const yearRangeFilter =
@@ -185,7 +206,7 @@ export class CasesService implements OnModuleInit {
               /BVerfGE(\d+),(\d+)/,
               'BVerfGE $1, $2',
             ),
-            fields: ['judgment', 'facts', 'reasoning', 'headnotes'],
+            fields: searchFieldsPass,
             type: 'phrase',
           },
         },
@@ -203,18 +224,34 @@ export class CasesService implements OnModuleInit {
       },
     });
 
-    const secondQueryHits = secondQueryResult.hits.hits.map(
-      (hit) => hit._source,
-    );
+    const secondQueryHits = secondQueryResult.hits.hits
+      .map((hit) => hit._source)
+      .sort((a, b) => {
+        const aHasName = a['caseName'] ? 1 : 0;
+        const bHasName = b['caseName'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
 
-    const combinedResults = [
-      ...new Map(
-        [...firstQueryHits, ...secondQueryHits].map((item) => [
-          item['id'],
-          item,
-        ]),
-      ).values(),
-    ];
+    let combinedResults = [];
+    if (isFiltersEmpty) {
+      combinedResults = [
+        ...new Map(
+          [...firstQueryHits, ...secondQueryHits].map((item) => [
+            item['number'],
+            item,
+          ]),
+        ).values(),
+      ];
+    } else {
+      combinedResults = [
+        ...new Map(
+          [...secondQueryHits, ...firstQueryHits].map((item) => [
+            item['number'],
+            item,
+          ]),
+        ).values(),
+      ];
+    }
 
     const total = combinedResults.length;
     const from = filter.skip || 0;
@@ -229,6 +266,7 @@ export class CasesService implements OnModuleInit {
 
   async searchCases(filter: FilterCasesQueryDto) {
     const { searchTerm, startYear, endYear, decisionType } = filter;
+    let isFiltersEmpty = true;
     const caseNumberPattern =
       /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
 
@@ -239,7 +277,6 @@ export class CasesService implements OnModuleInit {
     }
 
     // Build search fields based on selected boolean filters
-    if (filter.number) searchFieldsPass.push('number');
     if (filter.judgment) searchFieldsPass.push('judgment', 'judgment_lemma');
     if (filter.facts) searchFieldsPass.push('facts', 'facts_lemma');
     if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
@@ -252,8 +289,6 @@ export class CasesService implements OnModuleInit {
     // If no specific fields are selected, search across all fields in the second pass
     if (searchFieldsPass.length === 0) {
       searchFieldsPass.push(
-        'caseName',
-        'name_lemma',
         'number',
         'judgment',
         'judgment_lemma',
@@ -264,6 +299,8 @@ export class CasesService implements OnModuleInit {
         'headnotes',
         'headnotes_lemma',
       );
+    } else if (searchFieldsPass.length > 0) {
+      isFiltersEmpty = false;
     }
 
     let searchResults = [];
@@ -303,11 +340,19 @@ export class CasesService implements OnModuleInit {
         ...baseFilter,
         bool: {
           ...baseFilter.bool,
-          must: [
+          should: [
             {
               multi_match: {
                 query: updatedSearchTerm.trim(),
-                fields: searchFieldsPass,
+                fields: ['caseName', 'name_lemma'],
+                type: 'phrase',
+                boost: 10,
+              },
+            },
+            {
+              multi_match: {
+                query: lemmatizedSearchTerm,
+                fields: ['caseName', 'name_lemma'],
                 type: 'phrase',
               },
             },
@@ -325,14 +370,26 @@ export class CasesService implements OnModuleInit {
         size: 4000,
       });
 
-      const firstQueryHits = firstQueryResult.hits.hits.map(
-        (hit) => hit._source,
-      );
+      const firstQueryHits = firstQueryResult.hits.hits
+        .map((hit) => hit._source)
+        .sort((a, b) => {
+          const aHasName = a['caseName'] ? 1 : 0;
+          const bHasName = b['caseName'] ? 1 : 0;
+          return bHasName - aHasName;
+        });
       const secondQuery: any = {
         ...baseFilter,
         bool: {
           ...baseFilter.bool,
-          must: [
+          should: [
+            {
+              multi_match: {
+                query: updatedSearchTerm.trim(),
+                fields: searchFieldsPass,
+                type: 'phrase',
+                boost: 10,
+              },
+            },
             {
               multi_match: {
                 query: lemmatizedSearchTerm,
@@ -354,16 +411,32 @@ export class CasesService implements OnModuleInit {
         size: 4000,
       });
 
-      const secondQueryHits = secondQueryResult.hits.hits.map(
-        (hit) => hit._source,
-      );
+      const secondQueryHits = secondQueryResult.hits.hits
+        .map((hit) => hit._source)
+        .sort((a, b) => {
+          const aHasName = a['caseName'] ? 1 : 0;
+          const bHasName = b['caseName'] ? 1 : 0;
+          return bHasName - aHasName;
+        });
 
-      const combinedResults = [
-        ...firstQueryHits,
-        ...secondQueryHits.filter(
-          (item) => !firstQueryHits.some((hit) => hit['id'] === item['id']),
-        ),
-      ];
+      let combinedResults = [];
+      if (isFiltersEmpty) {
+        combinedResults = [
+          ...firstQueryHits,
+          ...secondQueryHits.filter(
+            (item) =>
+              !firstQueryHits.some((hit) => hit['number'] === item['number']),
+          ),
+        ];
+      } else {
+        combinedResults = [
+          ...secondQueryHits,
+          ...firstQueryHits.filter(
+            (item) =>
+              !firstQueryHits.some((hit) => hit['number'] === item['number']),
+          ),
+        ];
+      }
 
       const total = combinedResults.length;
       const from = filter.skip || 0;

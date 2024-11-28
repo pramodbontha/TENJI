@@ -1,8 +1,10 @@
 import { ICase } from "@/types";
 import { normalizeCaseNumber } from "@/utils/helpers";
 import { useEffect, useState } from "react";
-import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
+import { SearchTermHighlighter } from "@/components";
+import { useAppSelector } from "@/redux/hooks";
+import { RootState } from "@/redux/store";
 
 interface DisplayCaseSectionProps {
   selectedCase: ICase;
@@ -13,11 +15,14 @@ interface DisplayCaseSectionProps {
 
 const DisplayCaseSection = ({
   selectedCase,
-  searchTerm,
-  lemmatizedSearchTerm,
   openCaseModal,
 }: DisplayCaseSectionProps) => {
   const [adjustedText, setAdjustedText] = useState("");
+  const {
+    query: searchTerm,
+    lemmatizedQuery: lemmatizedSearchTerm,
+    citationQuery,
+  } = useAppSelector((state: RootState) => state.searchBar);
   const { t } = useTranslation();
   const caseProperties = [
     { title: t("judgement"), text: selectedCase.judgment },
@@ -34,17 +39,17 @@ const DisplayCaseSection = ({
       return [
         searchTerm,
         lemmatizedSearchTerm,
+        citationQuery,
         formattedCaseNumber,
         formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
       ];
     }
-    return [searchTerm, lemmatizedSearchTerm];
+    return [searchTerm, lemmatizedSearchTerm, citationQuery];
   };
 
   const includesQuery = (text: string | undefined) =>
     text &&
     text.trim() !== "" &&
-    (searchTerm || lemmatizedSearchTerm) &&
     getHighlightedSearchTerms()
       .filter(Boolean)
       .some((term) => text.toLowerCase().includes(term!.toLowerCase()));
@@ -58,14 +63,15 @@ const DisplayCaseSection = ({
   );
   const selectedSection = sectionWithQuery || sectionWithText;
 
-  const displayText = (text: string) => {
-    return text.length > 200 ? `${text.slice(0, 200)}...` : text;
+  const displayText = (text: string, isSearch: boolean) => {
+    const slicedText = isSearch ? text.slice(0, 240) : text.slice(0, 200);
+    return text.length > 240 ? `${slicedText}...` : text;
   };
 
   useEffect(() => {
     if (selectedSection?.text) {
       const clampLines = 3; // Number of lines to clamp
-      const maxCharsPerLine = 80; // Approximate characters per line, adjust based on design
+      const maxCharsPerLine = 100; // Approximate characters per line, adjust based on design
       const totalCharsVisible = clampLines * maxCharsPerLine;
 
       const text = selectedSection.text;
@@ -86,24 +92,22 @@ const DisplayCaseSection = ({
           const end = Math.min(text.length, start + totalCharsVisible);
           setAdjustedText(`...${text.slice(start, end)}...`); // Adjusted text with ellipsis
         } else {
-          setAdjustedText(displayText(text)); // No need to adjust
+          setAdjustedText(displayText(text, true)); // No need to adjust
         }
       } else {
-        setAdjustedText(displayText(text)); // No query match, use full text
+        setAdjustedText(displayText(text, false)); // No query match, use full text
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSection, searchTerm]);
+  }, [selectedSection, searchTerm, citationQuery]);
 
   return (
     <>
       <div className="line-clamp-3">
         <span className="font-bold mr-2">{selectedSection?.title}:</span>
-        <Highlighter
-          highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+        <SearchTermHighlighter
           searchWords={getHighlightedSearchTerms().filter(Boolean) as string[]}
-          autoEscape={true}
-          textToHighlight={adjustedText || ""}
+          textToHighlight={adjustedText}
         />
         <span
           className="text-black-500 font-medium underline cursor-pointer ml-1"

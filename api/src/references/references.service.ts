@@ -3,6 +3,7 @@ import { FilterReferencesQueryDto } from './dto/filter-references-query.dto';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
+import { normalizeCaseNumber } from 'src/utils/helpers';
 
 @Injectable()
 export class ReferencesService implements OnModuleInit {
@@ -103,6 +104,20 @@ export class ReferencesService implements OnModuleInit {
     }
   }
 
+  private checkAndFormateCaseNumber(searchTerm: string) {
+    const caseNumberPattern =
+      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+    if (caseNumberPattern.test(searchTerm.trim())) {
+      const normalizedCaseNumber = normalizeCaseNumber(searchTerm);
+      return normalizedCaseNumber.replace(
+        /BVerfGE(\d+),(\d+)/,
+        'BVerfGE $1, $2',
+      );
+    } else {
+      return searchTerm;
+    }
+  }
+
   public async searchReferences(filter: FilterReferencesQueryDto) {
     let lemmatizedSearchTerm = filter.searchTerm;
 
@@ -130,7 +145,7 @@ export class ReferencesService implements OnModuleInit {
         should: [
           {
             multi_match: {
-              query: filter.searchTerm,
+              query: this.checkAndFormateCaseNumber(filter.searchTerm),
               fields: ['text'],
               type: 'phrase',
               boost: 3,
@@ -138,7 +153,7 @@ export class ReferencesService implements OnModuleInit {
           },
           {
             multi_match: {
-              query: filter.searchTerm,
+              query: this.checkAndFormateCaseNumber(filter.searchTerm),
               fields: ['text', 'context'],
               type: 'phrase',
               boost: 2,

@@ -34,8 +34,8 @@ const Header = () => {
             defaultValue={"de"}
             onChange={(value) => dispatch(setLanguage(value))}
             options={[
-              { label: "EN", value: "en" },
               { label: "DE", value: "de" },
+              { label: "EN", value: "en" },
               { label: "PT", value: "pt-PT" },
             ]}
           />

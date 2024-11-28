@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setCitedByCases } from "@/slices/CaseSlice";
 import { useTranslation } from "react-i18next";
 import { CaseCard } from "@/components/Cards";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 
 interface CitedByCaseProps {
   citedByCases: CitationsCases;
@@ -29,6 +30,7 @@ const CitedByCase = (props: CitedByCaseProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    dispatch(setCitationQuery(e.target.value));
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -132,7 +134,6 @@ const CitedByCase = (props: CitedByCaseProps) => {
                   key={"cited-by-cases" + cases.id}
                   cases={cases}
                   isSearchResult={true}
-                  searchTerm={searchTerm}
                   openCaseModal={openCaseModal}
                   openCitationModal={addCaseCitations}
                 />

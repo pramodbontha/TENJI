@@ -2,6 +2,7 @@ import { ArticleCard } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useLazyGetArticlesCitingCaseQuery } from "@/services/CitationsApi";
 import { setArticlesCitingCases } from "@/slices/ArticleSlice";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 import { Article, CitationsArticles } from "@/types";
 import { Row, Col, Pagination, PaginationProps, Input } from "antd";
 import { useEffect, useState } from "react";
@@ -36,6 +37,7 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    dispatch(setCitationQuery(e.target.value));
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -138,7 +140,6 @@ const ArticlesCitingCases = (props: ArticlesCitingCasesProps) => {
                   key={"aritcles-citing-cases" + article.id}
                   article={article}
                   isSearchResult={true}
-                  searchTerm={searchTerm}
                   openArticleModal={openArticleModal}
                   openCitationModal={addArticleCitations}
                 />

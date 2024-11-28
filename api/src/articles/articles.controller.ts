@@ -3,6 +3,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   Query,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
@@ -10,6 +11,7 @@ import { FilterArticlesQueryDto } from './dto/filter-articles-query.dto';
 
 @Controller('articles')
 export class ArticlesController {
+  private readonly logger = new Logger(ArticlesController.name);
   constructor(private readonly articlesService: ArticlesService) {}
 
   @Get('top-cited')
@@ -34,6 +36,9 @@ export class ArticlesController {
     @Query() filterDto: FilterArticlesQueryDto,
   ) {
     try {
+      this.logger.log(
+        `Filtering articles with query: ${JSON.stringify(filterDto)}`,
+      );
       const articleNumberPattern =
         /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
 

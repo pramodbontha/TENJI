@@ -1,5 +1,8 @@
-export const articleNumberFormatter = (articleNumber: string) => {
-  return `Art. ${articleNumber} GG`;
+export const articleNumberFormatter = (
+  articleNumber: string,
+  resource: string
+) => {
+  return `Art. ${articleNumber} ${resource}`;
 };
 
 export const caseNumberFormatter = (caseNumber: string) => {

@@ -11,6 +11,7 @@ export interface Article {
     low: number;
     high: number;
   };
+  resource: string;
 }
 
 export interface ArticleFilter {

@@ -6,6 +6,7 @@ import { setCasesCitingArticle } from "@/slices/CaseSlice";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CaseCard } from "@/components";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 
 interface CasesCitingArticlesProps {
   casesCitingArticle: CitationsCases;
@@ -31,6 +32,7 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    dispatch(setCitationQuery(e.target.value));
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -131,7 +133,6 @@ const CasesCitingArticles = (props: CasesCitingArticlesProps) => {
                   key={"cases-citing-articles" + cases.id}
                   cases={cases}
                   isSearchResult={true}
-                  searchTerm={searchTerm}
                   openCaseModal={openCaseModal}
                   openCitationModal={addCaseCitations}
                 />

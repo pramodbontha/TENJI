@@ -13,6 +13,7 @@ import {
   PaginationProps,
   Row,
 } from "antd";
+import { ExportOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
@@ -220,11 +221,23 @@ const BookModal = (props: BookModalProps) => {
               {breadCrumbItems.map((item, index) => (
                 <Breadcrumb.Item key={index}>
                   {index < breadCrumbItems.length - 1 ? (
-                    <a onClick={() => updateSections(item, false, index)}>
-                      {item}
-                    </a>
+                    <div className="flex">
+                      <div className="mr-2">
+                        <a onClick={() => updateSections(item, false, index)}>
+                          {item}
+                        </a>
+                      </div>
+                      <a>
+                        <ExportOutlined />
+                      </a>
+                    </div>
                   ) : (
-                    item
+                    <div className="flex">
+                      <div className="mr-2">{item}</div>
+                      <a>
+                        <ExportOutlined />
+                      </a>
+                    </div>
                   )}
                 </Breadcrumb.Item>
               ))}

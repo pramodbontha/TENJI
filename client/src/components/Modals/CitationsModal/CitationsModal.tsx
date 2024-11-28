@@ -66,6 +66,7 @@ import { useTranslation } from "react-i18next";
 import { setCitationsMenu } from "@/slices/CitationsSlice";
 import _ from "lodash";
 import { articleNumberFormatter, caseNumberFormatter } from "@/utils/helpers";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 
 const { Item } = Menu;
 
@@ -353,6 +354,7 @@ const CitationsModal = (props: CitationsModalProps) => {
     dispatch(setCitingArticlesCount(0));
     dispatch(setCitingCasesCount(0));
     dispatch(setCitationsMenu([]));
+    dispatch(setCitationQuery(""));
   };
 
   const openCaseModal = (selectedCase: ICase) => {
@@ -372,7 +374,14 @@ const CitationsModal = (props: CitationsModalProps) => {
   const getCitationLabel = (item: Article | ICase) => {
     return "caseName" in item
       ? caseNumberFormatter(item.number)
-      : articleNumberFormatter(item.number);
+      : articleNumberFormatter(item.number, item.resource);
+  };
+
+  const getArticleLabel = (selectedCitationNumber: string) => {
+    const article = citationsMenu.find(
+      (item) => item.number === selectedCitationNumber
+    ) as Article;
+    return articleNumberFormatter(selectedCitationNumber, article?.resource);
   };
 
   return (
@@ -389,12 +398,12 @@ const CitationsModal = (props: CitationsModalProps) => {
           <div className="mt-2 p-2 flex">
             <div className="w-[260px] border-slate-100">
               <div className="font-bold">{t("citations-network")}</div>
-              <div className="h-[650px] bg-slate-100 p-4">
+              <div className="h-[673px] bg-slate-100 p-4">
                 <Menu
                   onClick={handleCitationsMenuClick}
                   selectedKeys={[selectedCitationKey]}
                   mode="inline"
-                  className="h-[620px] overflow-y-scroll scrollbar-rounded text-center"
+                  className="h-[640px] overflow-y-scroll scrollbar-rounded text-center"
                 >
                   {citationsMenu &&
                     citationsMenu.map((menuItem) => (
@@ -410,7 +419,7 @@ const CitationsModal = (props: CitationsModalProps) => {
                 <>
                   <div className="font-bold">{`${t("article-number")}: ${
                     selectedCitationNumber
-                      ? articleNumberFormatter(selectedCitationNumber)
+                      ? getArticleLabel(selectedCitationNumber)
                       : ""
                   }`}</div>
                   <div className="h-[650px]">

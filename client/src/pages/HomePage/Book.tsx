@@ -69,7 +69,7 @@ const Book = () => {
                       className=" h-44 drop-shadow-md"
                       extra={
                         <Button onClick={() => openBookModal(book)}>
-                          {t("more")}
+                          {t("in-the-book")}
                         </Button>
                       }
                     >

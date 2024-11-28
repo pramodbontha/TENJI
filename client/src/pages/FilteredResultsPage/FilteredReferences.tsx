@@ -1,19 +1,18 @@
-import { BookModal } from "@/components";
+import { BookModal, ReferenceCard, ReferenceModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { setReferences } from "@/slices/ReferenceSlice";
 import { Reference } from "@/types";
-import { normalizeCaseNumber } from "@/utils/helpers";
-import { Button, Card, Col, Pagination, PaginationProps, Row } from "antd";
+import { Col, Pagination, PaginationProps, Row } from "antd";
 import { useState } from "react";
-import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 
 const FilteredReferences = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
   const [selectedReference, setSelectedReference] = useState({} as Reference);
   const { references, referencesCount } = useAppSelector(
     (state: RootState) => state.references
@@ -57,20 +56,9 @@ const FilteredReferences = () => {
     setIsBookModalOpen(true);
   };
 
-  const getHighlightedSearchTerms = () => {
-    const { query, lemmatizedQuery } = searchBar;
-    const caseNumberPattern =
-      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
-    if (caseNumberPattern.test(query || "")) {
-      const formattedCaseNumber = normalizeCaseNumber(query);
-      return [
-        query,
-        lemmatizedQuery,
-        formattedCaseNumber,
-        formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
-      ];
-    }
-    return [query, lemmatizedQuery];
+  const openReferenceModal = (reference: Reference) => {
+    setSelectedReference(reference);
+    setIsReferenceModalOpen(true);
   };
 
   return (
@@ -94,40 +82,13 @@ const FilteredReferences = () => {
           <Row gutter={[16, 16]}>
             {references?.map((reference, index) => (
               <Col key={reference.id + index} span={24}>
-                <Card
-                  title={
-                    <Highlighter
-                      highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                      searchWords={
-                        getHighlightedSearchTerms().filter(Boolean) as string[]
-                      }
-                      autoEscape={true}
-                      textToHighlight={reference.text}
-                    />
-                  }
-                  extra={
-                    <Button onClick={() => openBookModal(reference)}>
-                      {t("find-in-book")}
-                    </Button>
-                  }
-                  className="h-44 drop-shadow-md"
-                >
-                  <div>
-                    <div className="font-bold w-24">{t("context")}:</div>
-                    <div className="line-clamp-3">
-                      <Highlighter
-                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                        searchWords={
-                          getHighlightedSearchTerms().filter(
-                            Boolean
-                          ) as string[]
-                        }
-                        autoEscape={true}
-                        textToHighlight={reference.context}
-                      />
-                    </div>
-                  </div>
-                </Card>
+                <ReferenceCard
+                  key={"references" + reference.id}
+                  reference={reference}
+                  isSearchResult={true}
+                  openBookModal={openBookModal}
+                  openReferenceModal={openReferenceModal}
+                />
               </Col>
             ))}
           </Row>
@@ -148,6 +109,13 @@ const FilteredReferences = () => {
           reference={selectedReference}
           isOpen={isBookModalOpen}
           onClose={() => setIsBookModalOpen(false)}
+        />
+      )}
+      {isReferenceModalOpen && (
+        <ReferenceModal
+          reference={selectedReference}
+          isOpen={isReferenceModalOpen}
+          onClose={() => setIsReferenceModalOpen(false)}
         />
       )}
     </>

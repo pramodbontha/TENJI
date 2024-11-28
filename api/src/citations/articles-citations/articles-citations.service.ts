@@ -87,7 +87,11 @@ export class ArticlesCitationsService {
         }),
       );
 
-      const flattenedResults = elasticSearchResults.flat();
+      const flattenedResults = elasticSearchResults.flat().sort((a, b) => {
+        const aHasName = a['name'] ? 1 : 0;
+        const bHasName = b['name'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
       return { articles: flattenedResults, total: totalCount };
     } catch (error) {
       this.logger.error(
@@ -195,7 +199,11 @@ export class ArticlesCitationsService {
         }),
       );
 
-      const flattenedResults = elasticSearchResults.flat();
+      const flattenedResults = elasticSearchResults.flat().sort((a, b) => {
+        const aHasName = a['name'] ? 1 : 0;
+        const bHasName = b['name'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
       return { articles: flattenedResults, total: totalCount };
     } catch (error) {
       this.logger.error(
@@ -301,7 +309,11 @@ export class ArticlesCitationsService {
           return result.hits.hits.map((hit) => hit._source);
         }),
       );
-      const flattenedResults = elasticSearchResults.flat();
+      const flattenedResults = elasticSearchResults.flat().sort((a, b) => {
+        const aHasName = a['caseName'] ? 1 : 0;
+        const bHasName = b['caseName'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
 
       return { cases: flattenedResults, total: totalCount };
     } catch (error) {

@@ -116,13 +116,13 @@ const AppTour = () => {
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">DE:</div>
             {
-              "Dies ist der Bereich für empfohlene Artikel. Verwenden Sie die Schaltfläche „Mehr“, um weitere Details und Zitate anzuzeigen, um die Artikel, Fälle und Buchreferenzen zu sehen, die den Artikel zitieren."
+              "Dies ist der Bereich für empfohlene Artikel. Verwenden Sie die Schaltfläche „In den Text“, um weitere Details und „Zitate“ anzuzeigen, um die Artikel, Fälle und Buchreferenzen zu sehen, die den Artikel zitieren."
             }
           </div>
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">EN:</div>
             {
-              "This the section for recommended articles. Use More button to view more details and citations to view the articles, cases and book references citing the article."
+              "This the section for recommended articles. Use 'In the Text' button to view more details and 'Citations' to view the articles, cases and book references citing the article."
             }
           </div>
         </>
@@ -139,13 +139,13 @@ const AppTour = () => {
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">DE:</div>
             {
-              "Dies ist der Bereich für empfohlene Fälle. Verwenden Sie die Schaltfläche „Mehr“, um weitere Details und Zitate anzuzeigen, um die Artikel, Fälle und Buchverweise anzuzeigen, die den Fall zitieren."
+              "Dies ist der Bereich für empfohlene Fälle. Verwenden Sie die Schaltfläche „In den Text“, um weitere Details und „Zitate“ anzuzeigen, um die Artikel, Fälle und Buchverweise anzuzeigen, die den Fall zitieren."
             }
           </div>
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">EN:</div>
             {
-              "This the section for recommended cases. Use More button to view more details and citations to view the articles, cases and book references citing the case."
+              "This the section for recommended cases. Use 'In the Text' button to view more details and 'Citations' to view the articles, cases and book references citing the case."
             }
           </div>
         </>
@@ -161,13 +161,13 @@ const AppTour = () => {
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">DE:</div>
             {
-              "Dies ist der Bereich für empfohlene Bücher. Verwenden Sie die Schaltfläche Mehr, um das Buch und seinen Inhalt zu erkunden."
+              "Dies ist der Bereich für empfohlene Bücher. Verwenden Sie die Schaltfläche „In das Buch“, um das Buch und seinen Inhalt zu erkunden."
             }
           </div>
           <div className="flex mt-2 p-1">
             <div className="font-medium mr-2">EN:</div>
             {
-              "This the section for recommended books. Use More button to explore the book and its contents."
+              "This the section for recommended books. Use 'In the Book' button to explore the book and its contents."
             }
           </div>
         </>

@@ -1,50 +1,55 @@
 import { Article } from "@/types";
-import { Button, Card, Space } from "antd";
-import Highlighter from "react-highlight-words";
+import { Button, Card, Space, Popover } from "antd";
 import { useTranslation } from "react-i18next";
-import DisplayArticleSection from "../DisplayArticleSection";
+import { SearchTermHighlighter, DisplayArticleSection } from "@/components";
 import { articleNumberFormatter } from "@/utils/helpers";
+import { useAppSelector } from "@/redux/hooks";
+import { RootState } from "@/redux/store";
 
 interface ArticleCardProps {
   article: Article;
   isSearchResult?: boolean;
-  searchTerm?: string;
-  lemmatizedSearchTerm?: string;
   openArticleModal: (article: Article) => void;
   openCitationModal: (article: Article) => void;
 }
 
 const ArticleCard = (props: ArticleCardProps) => {
-  const {
-    article,
-    isSearchResult,
-    searchTerm,
-    lemmatizedSearchTerm,
-    openArticleModal,
-    openCitationModal,
-  } = props;
+  const { article, isSearchResult, openArticleModal, openCitationModal } =
+    props;
+  const { query, lemmatizedQuery, citationQuery } = useAppSelector(
+    (state: RootState) => state.searchBar
+  );
   const { t } = useTranslation();
+
+  const getHighlightTerms = () => {
+    if (isSearchResult) {
+      return [query, lemmatizedQuery, citationQuery].filter(
+        Boolean
+      ) as string[];
+    }
+    return [];
+  };
 
   return (
     <>
       <Card
         title={
-          <Highlighter
-            highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-            searchWords={
-              isSearchResult && searchTerm
-                ? ([searchTerm, lemmatizedSearchTerm].filter(
-                    Boolean
-                  ) as string[])
-                : []
-            }
-            autoEscape={true}
-            textToHighlight={
+          <Popover
+            content={
               article.name
                 ? `${article.name}`
-                : articleNumberFormatter(article.number)
+                : articleNumberFormatter(article.number, article.resource)
             }
-          />
+          >
+            <SearchTermHighlighter
+              searchWords={getHighlightTerms()}
+              textToHighlight={
+                article.name
+                  ? `${article.name}`
+                  : articleNumberFormatter(article.number, article.resource)
+              }
+            />
+          </Popover>
         }
         className="h-44 drop-shadow-md"
         extra={
@@ -63,11 +68,12 @@ const ArticleCard = (props: ArticleCardProps) => {
         {article.name && (
           <div className="flex line-clamp-1 -mt-3">
             <div className="line-clamp-1 font-semibold">
-              <Highlighter
-                highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                searchWords={isSearchResult && searchTerm ? [searchTerm] : []}
-                autoEscape={true}
-                textToHighlight={articleNumberFormatter(article.number)}
+              <SearchTermHighlighter
+                searchWords={getHighlightTerms()}
+                textToHighlight={articleNumberFormatter(
+                  article.number,
+                  article.resource
+                )}
               />
             </div>
           </div>
@@ -76,10 +82,6 @@ const ArticleCard = (props: ArticleCardProps) => {
           <DisplayArticleSection
             openArticleModal={openArticleModal}
             selectedArticle={article}
-            searchTerm={isSearchResult && searchTerm ? searchTerm : ""}
-            lemmatizedSearchTerm={
-              isSearchResult && lemmatizedSearchTerm ? lemmatizedSearchTerm : ""
-            }
           />
         </div>
       </Card>

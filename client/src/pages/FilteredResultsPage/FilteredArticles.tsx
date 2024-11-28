@@ -22,9 +22,7 @@ const FilteredArticles = () => {
     (state: RootState) => state.articles
   );
   const { citationsMenu } = useAppSelector((state) => state.citations);
-  const { query, lemmatizedQuery } = useAppSelector(
-    (state: RootState) => state.searchBar
-  );
+  const { query } = useAppSelector((state: RootState) => state.searchBar);
   const values = useAppSelector((state: RootState) => state.form);
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
@@ -89,8 +87,6 @@ const FilteredArticles = () => {
                   <ArticleCard
                     article={article}
                     isSearchResult={true}
-                    searchTerm={query}
-                    lemmatizedSearchTerm={lemmatizedQuery}
                     openArticleModal={openArticleModal}
                     openCitationModal={openCitationModal}
                   />

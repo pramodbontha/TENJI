@@ -1,18 +1,11 @@
+import { ReferenceCard } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useLazyGetReferencesWithGivenCaseQuery } from "@/services/CitationsApi";
 import { setCaseReferences } from "@/slices/ReferenceSlice";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 import { CitationsReferences, Reference } from "@/types";
-import {
-  Row,
-  Col,
-  Card,
-  Button,
-  Pagination,
-  PaginationProps,
-  Input,
-} from "antd";
+import { Row, Col, Pagination, PaginationProps, Input } from "antd";
 import { useEffect, useState } from "react";
-import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 
 interface CaseReferenceProps {
@@ -39,6 +32,7 @@ const CaseReferences = (props: CaseReferenceProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    dispatch(setCitationQuery(e.target.value));
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -135,36 +129,10 @@ const CaseReferences = (props: CaseReferenceProps) => {
             caseReferences.references?.length !== 0 &&
             caseReferences.references?.map((reference, index) => (
               <Col key={reference.id + index} span={24}>
-                <Card
-                  title={
-                    <Highlighter
-                      highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                      searchWords={[searchTerm]}
-                      autoEscape={true}
-                      textToHighlight={reference.text}
-                    />
-                  }
-                  extra={
-                    <Button onClick={() => openBookModal(reference)}>
-                      {t("find-in-book")}
-                    </Button>
-                  }
-                  className="h-44 drop-shadow-md"
-                >
-                  <div>
-                    <div className="font-bold w-24">{t("context")}:</div>
-                    <div className="line-clamp-3">
-                      {
-                        <Highlighter
-                          highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                          searchWords={[searchTerm]}
-                          autoEscape={true}
-                          textToHighlight={reference.context}
-                        />
-                      }
-                    </div>
-                  </div>
-                </Card>
+                <ReferenceCard
+                  reference={reference}
+                  openBookModal={openBookModal}
+                />
               </Col>
             ))}
         </Row>

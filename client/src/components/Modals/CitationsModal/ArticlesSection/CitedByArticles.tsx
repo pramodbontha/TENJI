@@ -2,6 +2,7 @@ import { ArticleCard } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useLazyGetCitedByArticlesQuery } from "@/services/CitationsApi";
 import { setCitedByArticles } from "@/slices/ArticleSlice";
+import { setCitationQuery } from "@/slices/SearchBarSlice";
 import { Article, CitationsArticles } from "@/types";
 import { Col, Input, Pagination, PaginationProps, Row } from "antd";
 import { useEffect, useState } from "react";
@@ -31,6 +32,7 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    dispatch(setCitationQuery(e.target.value));
   };
 
   const onChange: PaginationProps["onChange"] = async (
@@ -134,7 +136,6 @@ const CitedByArticles = (props: CitedByArticlesProps) => {
                   key={"cited-articles" + article.id}
                   article={article}
                   isSearchResult={true}
-                  searchTerm={searchTerm}
                   openArticleModal={openArticleModal}
                   openCitationModal={addArticleCitations}
                 />
