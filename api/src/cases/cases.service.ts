@@ -134,6 +134,7 @@ export class CasesService implements OnModuleInit {
     if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
     if (filter.headnotes) searchFieldsPass.push('headnotes', 'headnotes_lemma');
     const sort: any = [{ citing_cases: { order: 'desc' } }];
+    this.logger.log(`normalizedCaseNumber: ${normalizedCaseNumber}`);
 
     if (searchFieldsPass.length === 0) {
       searchFieldsPass.push(
@@ -273,7 +274,10 @@ export class CasesService implements OnModuleInit {
     const searchFieldsPass = [];
     let updatedSearchTerm = searchTerm;
     if (searchTerm && caseNumberPattern.test(searchTerm.trim())) {
-      updatedSearchTerm = normalizeCaseNumber(searchTerm);
+      updatedSearchTerm = normalizeCaseNumber(searchTerm).replace(
+        /BVerfGE(\d+),(\d+)/,
+        'BVerfGE $1, $2',
+      );
     }
 
     // Build search fields based on selected boolean filters

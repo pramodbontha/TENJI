@@ -67,7 +67,7 @@ const Case = () => {
   return (
     <>
       {cases && (
-        <div className=" p-4" id="recommended-cases">
+        <div className="p-4" id="recommended-cases">
           <div className="font-semibold">{t("recommended-cases")}</div>
           <div className="mt-2 flex">
             <Button

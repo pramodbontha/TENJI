@@ -5,17 +5,19 @@ interface SearchTermHighlighterProps {
   textToHighlight: string;
 }
 
-const SearchTermHighlighter = (props: SearchTermHighlighterProps) => {
-  const { searchWords, textToHighlight } = props;
+const SearchTermHighlighter = ({
+  searchWords = [],
+  textToHighlight = "",
+  ...rest
+}: SearchTermHighlighterProps) => {
   return (
-    <>
-      <Highlighter
-        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-        searchWords={searchWords || []}
-        autoEscape={true}
-        textToHighlight={textToHighlight || ""}
-      />
-    </>
+    <Highlighter
+      {...rest}
+      highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+      searchWords={searchWords}
+      autoEscape={true}
+      textToHighlight={textToHighlight}
+    />
   );
 };
 

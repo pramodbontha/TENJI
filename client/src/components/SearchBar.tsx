@@ -2,6 +2,7 @@ import {
   DeleteOutlined,
   FilterOutlined,
   HomeOutlined,
+  InfoCircleOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import { Input, Col, Row, Button, Form, Badge } from "antd";
@@ -246,7 +247,8 @@ const SearchBar = () => {
         <Col span={4}></Col>
         <Col span={14}>
           <div className="mt-1 pl-2 text-slate-600 font-semibold">
-            *{t("use-filters")}
+            {<InfoCircleOutlined />} {""}
+            {t("search-examples")} {t("use-filters")}
           </div>
         </Col>
       </Row>

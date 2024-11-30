@@ -4,7 +4,7 @@ import { initReactI18next } from "react-i18next";
 const resources = {
   en: {
     translation: {
-      "use-filters": "Use Filters for Advanced Search",
+      "use-filters": "Use Filters for Advanced Search.",
       filters: "Filters",
       "clear-filters": "Clear Filters",
       search: "Search",
@@ -65,11 +65,13 @@ const resources = {
       "items-per-page": "/ Page",
       "start-tour": "Start Tour",
       "in-the-book": "In the Book",
+      "search-examples":
+        "Search Examples: for case name 'Nassauskiesung', case number 'BVerfGE 58 300', article name 'Erbrecht' and article number 'Art. 14 GG'.",
     },
   },
   de: {
     translation: {
-      "use-filters": "Verwenden Sie Filter für die erweiterte Suche",
+      "use-filters": "Verwenden Sie Filter für die erweiterte Suche.",
       filters: "Filter",
       "clear-filters": "Filter löschen",
       search: "Suche",
@@ -130,11 +132,13 @@ const resources = {
       "items-per-page": "/ Seite",
       "start-tour": "Tour starten",
       "in-the-book": "In das Buch",
+      "search-examples":
+        "Suchbeispiele: für Fallname 'Nassauskiesung', Fallnummer 'BVerfGE 58 300', Artikelname 'Erbrecht' und Artikelnummer 'Art. 14 GG'.",
     },
   },
   "pt-PT": {
     translation: {
-      "use-filters": "Use Filtros para Pesquisa Avançada",
+      "use-filters": "Use Filtros para Pesquisa Avançada.",
       filters: "Filtros",
       "clear-filters": "Limpar Filtros",
       search: "Pesquisar",
@@ -195,6 +199,8 @@ const resources = {
       "items-per-page": "/ Página",
       "start-tour": "Iniciar Tour",
       "in-the-book": "No Livro",
+      "search-examples":
+        "Exemplos de Pesquisa: para nome do caso 'Nassauskiesung', número do caso 'BVerfGE 58 300', nome do artigo 'Erbrecht' e número do artigo 'Art. 14 GG'.",
     },
   },
 };

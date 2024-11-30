@@ -3,7 +3,7 @@ import { SearchTermHighlighter } from "@/components";
 import { Reference } from "@/types";
 import { useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
-import { normalizeCaseNumber } from "@/utils/helpers";
+import { caseNumberFormatter, normalizeCaseNumber } from "@/utils/helpers";
 import { useTranslation } from "react-i18next";
 import DisplayReferenceSection from "../DisplayReferenceSection";
 
@@ -34,6 +34,7 @@ const ReferenceCard = (props: ReferenceCardProps) => {
         lemmatizedQuery,
         citationQuery,
         formattedCaseNumber,
+        caseNumberFormatter(formattedCaseNumber),
         formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
       ];
     }

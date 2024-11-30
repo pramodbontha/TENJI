@@ -86,7 +86,7 @@ const Article = () => {
         </div>
       )}
       {articles && (
-        <div className={`mt-2 p-4`} id="recommended-articles">
+        <div className={`p-4`} id="recommended-articles">
           <div className="font-semibold">{t("recommended-articles")}</div>
           <div className="mt-2 flex">
             <Button

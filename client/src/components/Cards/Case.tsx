@@ -2,7 +2,7 @@ import { ICase } from "@/types";
 import { Button, Card, Space, Popover } from "antd";
 import { useTranslation } from "react-i18next";
 import { DisplayCaseSection, SearchTermHighlighter } from "@/components";
-import { caseNumberFormatter } from "@/utils/helpers";
+import { caseNumberFormatter, normalizeCaseNumber } from "@/utils/helpers";
 import { RootState } from "@/redux/store";
 import { useAppSelector } from "@/redux/hooks";
 
@@ -15,14 +15,29 @@ interface CaseCardProps {
 
 const CaseCard = (props: CaseCardProps) => {
   const { cases, isSearchResult, openCaseModal, openCitationModal } = props;
-  const { query, lemmatizedQuery, citationQuery } = useAppSelector(
-    (state: RootState) => state.searchBar
-  );
+  const {
+    query: searchTerm,
+    lemmatizedQuery: lemmatizedSearchTerm,
+    citationQuery,
+  } = useAppSelector((state: RootState) => state.searchBar);
   const { t } = useTranslation();
 
   const getHighlightTerms = () => {
     if (isSearchResult) {
-      return [query, lemmatizedQuery, citationQuery].filter(
+      const caseNumberPattern =
+        /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
+      if (caseNumberPattern.test(searchTerm || "")) {
+        const formattedCaseNumber = normalizeCaseNumber(searchTerm);
+        return [
+          searchTerm,
+          lemmatizedSearchTerm,
+          citationQuery,
+          formattedCaseNumber,
+          caseNumberFormatter(formattedCaseNumber),
+          formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
+        ].filter(Boolean) as string[];
+      }
+      return [searchTerm, lemmatizedSearchTerm, citationQuery].filter(
         Boolean
       ) as string[];
     }

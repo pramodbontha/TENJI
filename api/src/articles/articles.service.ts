@@ -129,6 +129,7 @@ export class ArticlesService implements OnModuleInit {
     const { searchTerm } = filter;
     const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
     const sort: any = [{ citing_cases: { order: 'desc' } }];
+    this.logger.log(`Searching articles by number: ${extractedSearchTerm}`);
     const firstQuery: any = {
       bool: {
         must: [
@@ -155,7 +156,7 @@ export class ArticlesService implements OnModuleInit {
 
     let lemmatizedSearchTerm = '';
 
-    if (firstQueryHits.length > 0) {
+    if (firstQueryHits.length > 0 && firstQueryHits[0]['name']) {
       lemmatizedSearchTerm = await this.lemmatizeText(
         firstQueryHits[0]['name'],
       );
@@ -166,7 +167,7 @@ export class ArticlesService implements OnModuleInit {
         must: [
           {
             multi_match: {
-              query: lemmatizedSearchTerm,
+              query: lemmatizedSearchTerm || extractedSearchTerm,
               fields: ['name', 'name_lemma', 'name.keyword'],
               type: 'phrase',
             },
@@ -305,11 +306,6 @@ export class ArticlesService implements OnModuleInit {
     // Pagination: skip and limit
     const from = filter.skip || 0;
     const size = filter.limit || 10;
-
-    // Execute the search query with sorting and pagination
-    this.logger.log(
-      `Searching articles with query: ${JSON.stringify(textFieldsQuery)}`,
-    );
 
     const result = await this.elasticsearchService.search({
       index: 'articles',
