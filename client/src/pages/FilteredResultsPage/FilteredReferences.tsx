@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { setReferences } from "@/slices/ReferenceSlice";
+import { setIsSearching } from "@/slices/SearchBarSlice";
 import { Reference } from "@/types";
 import { Col, Pagination, PaginationProps, Row } from "antd";
 import { useState } from "react";
@@ -30,13 +31,14 @@ const FilteredReferences = () => {
     pageNumber,
     newPageSize
   ) => {
+    dispatch(setIsSearching(true));
     setCurrentPage(pageNumber);
     if (newPageSize !== pageSize) {
       setPageSize(newPageSize);
     }
     try {
       const { data: filteredReferences } = await fetchFilteredReferences({
-        searchTerm: searchBar.query,
+        searchTerm: searchBar.query.join(" "),
         context: values.tbContextReferences,
         text: values.text,
         skip: (pageNumber - 1) * newPageSize,
@@ -46,6 +48,7 @@ const FilteredReferences = () => {
       });
       filteredReferences &&
         dispatch(setReferences(filteredReferences.references));
+      dispatch(setIsSearching(false));
     } catch (error) {
       console.error(error);
     }

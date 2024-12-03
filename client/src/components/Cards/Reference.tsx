@@ -27,10 +27,10 @@ const ReferenceCard = (props: ReferenceCardProps) => {
   const getHighlightedSearchTerms = () => {
     const caseNumberPattern =
       /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
-    if (caseNumberPattern.test(query || "")) {
-      const formattedCaseNumber = normalizeCaseNumber(query);
+    if (caseNumberPattern.test(query[0] || "")) {
+      const formattedCaseNumber = normalizeCaseNumber(query[0]);
       return [
-        query,
+        ...query,
         lemmatizedQuery,
         citationQuery,
         formattedCaseNumber,
@@ -38,7 +38,7 @@ const ReferenceCard = (props: ReferenceCardProps) => {
         formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
       ];
     }
-    return [query, lemmatizedQuery, citationQuery];
+    return [...query, lemmatizedQuery, citationQuery];
   };
 
   return (

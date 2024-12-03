@@ -5,6 +5,7 @@ import { RootState } from "@/redux/store";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 import { articleNumberFormatter } from "@/utils/helpers";
+import ModalSearchTermHighlighter from "../ModalSearchTermHighlighter";
 
 interface ArticleModalProps {
   article: Article;
@@ -23,9 +24,9 @@ const ArticleModal = (props: ArticleModalProps) => {
         title={
           <Highlighter
             highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-            searchWords={[searchBar.query]}
+            searchWords={[...searchBar.query]}
             autoEscape={true}
-            textToHighlight={`${t("article-number")}: ${articleNumberFormatter(
+            textToHighlight={`${articleNumberFormatter(
               article.number,
               article.resource
             )}`}
@@ -44,7 +45,7 @@ const ArticleModal = (props: ArticleModalProps) => {
               <div className="line-clamp-1">
                 <Highlighter
                   highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                  searchWords={[searchBar.query]}
+                  searchWords={[...searchBar.query]}
                   autoEscape={true}
                   textToHighlight={article.name}
                 />
@@ -54,10 +55,10 @@ const ArticleModal = (props: ArticleModalProps) => {
           <Tabs defaultActiveKey="1" className="h-full">
             <Tabs.TabPane tab={t("summary")} key="1" className="h-full">
               <div className="h-[450px] overflow-y-auto scrollbar-rounded">
-                <Highlighter
-                  highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
-                  searchWords={[searchBar.query]}
-                  autoEscape={true}
+                <ModalSearchTermHighlighter
+                  searchWords={
+                    searchBar.query[0].trim() !== "" ? [...searchBar.query] : []
+                  }
                   textToHighlight={article.text}
                 />
               </div>

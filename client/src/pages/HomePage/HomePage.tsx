@@ -6,7 +6,7 @@ import { Spin } from "antd";
 import { AppTour } from "@/components";
 
 const HomePage = () => {
-  const { isArticleLoading } = useAppSelector((state) => state.articles);
+  const { isSearching } = useAppSelector((state) => state.searchBar);
   const contentStyle: React.CSSProperties = {
     padding: 50,
     background: "rgba(0, 0, 0, 0.1)",
@@ -16,7 +16,7 @@ const HomePage = () => {
   const content = <div style={contentStyle} />;
   return (
     <>
-      {!isArticleLoading && (
+      {!isSearching && (
         <>
           <Article />
           <Case />
@@ -24,7 +24,7 @@ const HomePage = () => {
           <AppTour />
         </>
       )}
-      {isArticleLoading && (
+      {isSearching && (
         <div className="fixed inset-0 bg-black bg-opacity-25 flex justify-center items-center z-50">
           <Spin tip="Searching" size="large">
             {content}

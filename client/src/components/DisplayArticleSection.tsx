@@ -24,22 +24,22 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   const getHighlightedSearchTerms = () => {
     const articleNumberPattern =
       /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
-    if (articleNumberPattern.test(searchTerm)) {
-      const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
+    if (articleNumberPattern.test(searchTerm[0])) {
+      const extractedSearchTerm = searchTerm[0]?.match(/(\d+[a-zA-Z]?)/)?.[0];
       return [
-        searchTerm,
+        ...searchTerm,
         lemmatizedSearchTerm,
         citationQuery,
         `Artikel ${extractedSearchTerm}`,
       ];
     }
-    return [searchTerm, lemmatizedSearchTerm, citationQuery];
+    return [...searchTerm, lemmatizedSearchTerm, citationQuery];
   };
 
   const includesQuery = (text: string | undefined) =>
     text &&
     text.trim() !== "" &&
-    [searchTerm, lemmatizedSearchTerm, citationQuery]
+    [...searchTerm, lemmatizedSearchTerm, citationQuery]
       .filter(Boolean)
       .some((term) => text.toLowerCase().includes(term!.toLowerCase()));
 

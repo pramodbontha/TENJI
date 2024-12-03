@@ -23,7 +23,7 @@ const ArticleCard = (props: ArticleCardProps) => {
 
   const getHighlightTerms = () => {
     if (isSearchResult) {
-      return [query, lemmatizedQuery, citationQuery].filter(
+      return [...query, lemmatizedQuery, citationQuery].filter(
         Boolean
       ) as string[];
     }

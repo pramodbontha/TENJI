@@ -4,6 +4,7 @@ import { RootState } from "@/redux/store";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";
 import { setArticles, setSelectedArticle } from "@/slices/ArticleSlice";
 import { setCitationsMenu } from "@/slices/CitationsSlice";
+import { setIsSearching } from "@/slices/SearchBarSlice";
 import { Article } from "@/types";
 import { Col, Pagination, PaginationProps, Row } from "antd";
 import { useState } from "react";
@@ -36,13 +37,14 @@ const FilteredArticles = () => {
     pageNumber,
     newPageSize
   ) => {
+    dispatch(setIsSearching(true));
     setCurrentPage(pageNumber);
     if (newPageSize !== pageSize) {
       setPageSize(newPageSize);
     }
     try {
       const { data: filteredArticles } = await fetchFilteredArticles({
-        searchTerm: query,
+        searchTerm: query.join(" "),
         name: values.articleName,
         number: values.articleNumber,
         text: values.articleText,
@@ -50,6 +52,7 @@ const FilteredArticles = () => {
         limit: newPageSize,
       });
       filteredArticles && dispatch(setArticles(filteredArticles.articles));
+      dispatch(setIsSearching(false));
     } catch (error) {
       console.error(error);
     }

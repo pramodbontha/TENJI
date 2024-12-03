@@ -1,10 +1,10 @@
 import { Modal, Tabs } from "antd";
 import { ICase } from "@/types";
-import Highlighter from "react-highlight-words";
 import { useAppSelector } from "@/redux/hooks";
 import { RootState } from "@/redux/store";
 import { useTranslation } from "react-i18next";
 import { caseNumberFormatter } from "@/utils/helpers";
+import ModalSearchTermHighlighter from "../ModalSearchTermHighlighter";
 
 interface CaseModalProps {
   cases: ICase;
@@ -21,7 +21,7 @@ const CaseModal = (props: CaseModalProps) => {
     <>
       <div>
         <Modal
-          title={`${t("case-number")}: ${caseNumberFormatter(cases.number)}`}
+          title={`${caseNumberFormatter(cases.number)}`}
           open={isOpen}
           onOk={onClose}
           onCancel={onClose}
@@ -44,31 +44,27 @@ const CaseModal = (props: CaseModalProps) => {
             <Tabs defaultActiveKey="1" className="h-full">
               <Tabs.TabPane tab={t("decision")} key="1" className="h-full">
                 <Tabs defaultActiveKey="1" tabPosition="left">
-                  <Tabs.TabPane tab={t("judgement")} key="1" className="h-full">
+                  <Tabs.TabPane tab={t("headnotes")} key="1" className="h-full">
                     <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                      <Highlighter
-                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                      <ModalSearchTermHighlighter
                         searchWords={[
-                          searchBar.query || "",
+                          ...(searchBar.query || ""),
                           citationSearch || "",
                           searchBar.lemmatizedQuery || "",
                         ]}
-                        autoEscape={true}
-                        textToHighlight={cases.judgment}
+                        textToHighlight={cases.headnotes}
                       />
                     </div>
                   </Tabs.TabPane>
-                  <Tabs.TabPane tab={t("headnotes")} key="5" className="h-full">
+                  <Tabs.TabPane tab={t("judgement")} key="5" className="h-full">
                     <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                      <Highlighter
-                        highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                      <ModalSearchTermHighlighter
                         searchWords={[
-                          searchBar.query || "",
+                          ...(searchBar.query || ""),
                           citationSearch || "",
                           searchBar.lemmatizedQuery || "",
                         ]}
-                        autoEscape={true}
-                        textToHighlight={cases.headnotes}
+                        textToHighlight={cases.judgment}
                       />
                     </div>
                   </Tabs.TabPane>
@@ -76,14 +72,12 @@ const CaseModal = (props: CaseModalProps) => {
               </Tabs.TabPane>
               <Tabs.TabPane tab={t("facts")} key="2" className="h-full">
                 <div className="h-[450px] overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                  <Highlighter
-                    highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                  <ModalSearchTermHighlighter
                     searchWords={[
-                      searchBar.query || "",
+                      ...(searchBar.query || ""),
                       citationSearch || "",
                       searchBar.lemmatizedQuery || "",
                     ]}
-                    autoEscape={true}
                     textToHighlight={cases.facts}
                   />
                 </div>
@@ -91,14 +85,12 @@ const CaseModal = (props: CaseModalProps) => {
 
               <Tabs.TabPane tab={t("reasoning")} key="3" className="h-full">
                 <div className="h-[450px] w-auto overflow-y-auto overflow-x-hidden scrollbar-rounded">
-                  <Highlighter
-                    highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                  <ModalSearchTermHighlighter
                     searchWords={[
-                      searchBar.query || "",
+                      ...(searchBar.query || ""),
                       citationSearch || "",
                       searchBar.lemmatizedQuery || "",
                     ]}
-                    autoEscape={true}
                     textToHighlight={cases.reasoning}
                   />
                 </div>

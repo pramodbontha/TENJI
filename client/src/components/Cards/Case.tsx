@@ -26,10 +26,10 @@ const CaseCard = (props: CaseCardProps) => {
     if (isSearchResult) {
       const caseNumberPattern =
         /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
-      if (caseNumberPattern.test(searchTerm || "")) {
-        const formattedCaseNumber = normalizeCaseNumber(searchTerm);
+      if (caseNumberPattern.test(searchTerm[0] || "")) {
+        const formattedCaseNumber = normalizeCaseNumber(searchTerm[0]);
         return [
-          searchTerm,
+          ...searchTerm,
           lemmatizedSearchTerm,
           citationQuery,
           formattedCaseNumber,
@@ -37,7 +37,7 @@ const CaseCard = (props: CaseCardProps) => {
           formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
         ].filter(Boolean) as string[];
       }
-      return [searchTerm, lemmatizedSearchTerm, citationQuery].filter(
+      return [...searchTerm, lemmatizedSearchTerm, citationQuery].filter(
         Boolean
       ) as string[];
     }
@@ -104,7 +104,7 @@ const CaseCard = (props: CaseCardProps) => {
             <span>{cases.decision_type}</span>
           </div>
         </div>
-        <div className="line-clamp-3 mt-1">
+        <div className="line-clamp-3 mt-0">
           <DisplayCaseSection
             selectedCase={cases}
             openCaseModal={openCaseModal}

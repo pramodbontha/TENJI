@@ -34,7 +34,7 @@ export class CasesController {
     try {
       // Use a case-insensitive regex pattern to determine if the query matches the case number format
       const caseNumberPattern =
-        /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i; // The 'i' flag makes it case-insensitive
+        /(?:^|\s)(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)(?:\s|$)/i; // The 'i' flag makes it case-insensitive
       const searchTerm = filterDto.searchTerm || ''; // Use searchTerm from DTO
 
       if (filterDto.searchTerm && caseNumberPattern.test(searchTerm.trim())) {

@@ -3,7 +3,7 @@ import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { FilterArticlesQueryDto } from './dto/filter-articles-query.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
-import { normalizeCaseNumber } from 'src/utils/helpers';
+import { getSearchTerms } from 'src/utils/helpers';
 
 @Injectable()
 export class ArticlesService implements OnModuleInit {
@@ -114,7 +114,12 @@ export class ArticlesService implements OnModuleInit {
               },
               resource: { type: 'text' },
               name_lemma: { type: 'text' }, // Lemmatized field
-              text_lemma: { type: 'text' }, // Lemmatized field
+              text_lemma: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              }, // Lemmatized field
             },
           },
         },
@@ -125,11 +130,34 @@ export class ArticlesService implements OnModuleInit {
     }
   }
 
+  private getExtractedSearchTerm(searchTerm: string) {
+    const searchTerms = getSearchTerms(searchTerm);
+    const extractedSearchTerm = searchTerms[0].match(/\b\d+\b/)?.[0];
+
+    // Extract the word while excluding specific terms
+    const exclusionPattern =
+      /\b(Art\.?|Artikel|Artikelnummer|GG|Grundgesetz|Abs\.?|Satz|S\.?|Halbsatz|Paragraph|§|Nr\.?|Absatz|Ziffer|Buchstabe)\b/gi;
+    const secondSearchTermPattern = /\b[a-zäöüß]+\b/gi; // Matches any word (letters only)
+    const filteredWords = searchTerms
+      .join(',')
+      .match(secondSearchTermPattern)
+      ?.filter((word) => !word.match(exclusionPattern));
+
+    // Assuming you want the last valid word as secondSearchTerm
+    const secondSearchTerm = filteredWords.join(',');
+
+    return { extractedSearchTerm, secondSearchTerm };
+  }
+
   public async searchArticlesByNumber(filter: FilterArticlesQueryDto) {
     const { searchTerm } = filter;
-    const extractedSearchTerm = searchTerm?.match(/(\d+[a-zA-Z]?)/)?.[0];
+
+    const { extractedSearchTerm, secondSearchTerm } =
+      this.getExtractedSearchTerm(searchTerm);
+
     const sort: any = [{ citing_cases: { order: 'desc' } }];
     this.logger.log(`Searching articles by number: ${extractedSearchTerm}`);
+    this.logger.log(`Searching articles by term: ${secondSearchTerm}`);
     const firstQuery: any = {
       bool: {
         must: [
@@ -154,78 +182,47 @@ export class ArticlesService implements OnModuleInit {
 
     const firstQueryHits = firstQueryResult.hits.hits.map((hit) => hit._source);
 
-    let lemmatizedSearchTerm = '';
+    let secondQuery: any = {};
+    let secondQueryResult: any;
+    let secondQueryHits: any = [];
 
-    if (firstQueryHits.length > 0 && firstQueryHits[0]['name']) {
-      lemmatizedSearchTerm = await this.lemmatizeText(
-        firstQueryHits[0]['name'],
-      );
-    }
-
-    const secondQuery: any = {
-      bool: {
-        must: [
-          {
-            multi_match: {
-              query: lemmatizedSearchTerm || extractedSearchTerm,
-              fields: ['name', 'name_lemma', 'name.keyword'],
-              type: 'phrase',
+    if (secondSearchTerm) {
+      secondQuery = {
+        bool: {
+          must: [
+            {
+              multi_match: {
+                query: secondSearchTerm,
+                fields: [
+                  'name',
+                  'name_lemma',
+                  'name.keyword',
+                  'text',
+                  'text_lemma',
+                ],
+              },
             },
-          },
-        ],
-      },
-    };
-    const secondQueryResult = await this.elasticsearchService.search({
-      index: 'articles',
-      body: {
-        query: secondQuery,
-        sort,
-        from: 0,
-        size: 4000,
-      },
-    });
-
-    const secondQueryHits = secondQueryResult.hits.hits.map(
-      (hit) => hit._source,
-    );
-
-    const thirdQuery: any = {
-      bool: {
-        must: [
-          {
-            multi_match: {
-              query: `Artikel ${extractedSearchTerm}`,
-              fields: ['text', 'text_lemma'],
-              type: 'phrase',
-            },
-          },
-        ],
-      },
-    };
-
-    const thirdQueryResult = await this.elasticsearchService.search({
-      index: 'articles',
-      body: {
-        query: thirdQuery,
-        sort,
-        from: 0,
-        size: 1000,
-      },
-    });
-
-    const thirdQueryHits = thirdQueryResult.hits.hits
-      .map((hit) => hit._source)
-      .sort((a, b) => {
-        const aHasName = a['name'] ? 1 : 0;
-        const bHasName = b['name'] ? 1 : 0;
-        return bHasName - aHasName;
+          ],
+        },
+      };
+      secondQueryResult = await this.elasticsearchService.search({
+        index: 'articles',
+        body: {
+          query: secondQuery,
+          sort,
+          from: 0,
+          size: 4000,
+        },
       });
+      secondQueryHits = secondQueryResult.hits.hits.map((hit) => hit._source);
+    }
 
     const combinedResults = [
       ...new Map(
-        [...firstQueryHits, ...secondQueryHits, ...thirdQueryHits].map(
-          (item) => [item['number'], item],
-        ),
+        [...firstQueryHits, ...secondQueryHits].map((item) => [
+          item['number'],
+          item,
+        ]),
       ).values(),
     ];
 
@@ -242,20 +239,14 @@ export class ArticlesService implements OnModuleInit {
 
   async searchArticles(filter: FilterArticlesQueryDto) {
     // Trim the search term
-    let trimmedSearchTerm = filter.searchTerm?.trim();
+    const trimmedSearchTerm = filter.searchTerm?.trim();
 
     let searchFieldsPass = [];
 
-    const caseNumberPattern =
-      /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
-
-    if (caseNumberPattern.test(trimmedSearchTerm)) {
-      trimmedSearchTerm = normalizeCaseNumber(trimmedSearchTerm);
-    }
-
     if (filter.name)
       searchFieldsPass.push('name', 'name_lemma', 'name.keyword');
-    if (filter.text) searchFieldsPass.push('text', 'text_lemma');
+    if (filter.text)
+      searchFieldsPass.push('text', 'text_lemma', 'text.keyword');
 
     this.logger.log(`Search fields: ${searchFieldsPass}`);
 
@@ -266,6 +257,7 @@ export class ArticlesService implements OnModuleInit {
         'name.keyword',
         'text',
         'text_lemma',
+        'text.keyword',
       ];
     }
 
@@ -277,23 +269,25 @@ export class ArticlesService implements OnModuleInit {
 
     // If not an article number, perform lemmatized search
     if (trimmedSearchTerm) {
-      const lemmatizedSearchTerm = await this.lemmatizeText(trimmedSearchTerm);
+      const { secondSearchTerm } =
+        this.getExtractedSearchTerm(trimmedSearchTerm);
+      this.logger.log(`Second search term: ${secondSearchTerm}`);
+      const lemmatizedSearchTerm = await this.lemmatizeText(secondSearchTerm);
+      this.logger.log(`Trimmed search term: ${trimmedSearchTerm}`);
 
       textFieldsQuery.bool = {
         should: [
           {
             multi_match: {
-              query: trimmedSearchTerm,
+              query: secondSearchTerm,
               fields: searchFieldsPass,
               boost: 2,
-              type: 'phrase',
             },
           },
           {
             multi_match: {
               query: lemmatizedSearchTerm,
               fields: searchFieldsPass,
-              type: 'phrase',
             },
           },
         ],

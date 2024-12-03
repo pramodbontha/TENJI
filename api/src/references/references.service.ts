@@ -3,7 +3,7 @@ import { FilterReferencesQueryDto } from './dto/filter-references-query.dto';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
-import { normalizeCaseNumber } from 'src/utils/helpers';
+import { getSearchTerms, normalizeCaseNumber } from 'src/utils/helpers';
 
 @Injectable()
 export class ReferencesService implements OnModuleInit {
@@ -141,21 +141,33 @@ export class ReferencesService implements OnModuleInit {
       lemmatizedSearchTerm &&
       lemmatizedSearchTerm.trim() !== ''
     ) {
+      const searchTerms = getSearchTerms(filter.searchTerm);
+      const filteredTerms = searchTerms.filter(
+        (term) => !term.startsWith('BVerfGE') && !term.startsWith('Art.'),
+      );
+      this.logger.log(`Search terms: ${searchTerms}`);
       query.bool = {
         should: [
           {
             multi_match: {
-              query: this.checkAndFormateCaseNumber(filter.searchTerm),
+              query: this.checkAndFormateCaseNumber(searchTerms[0]),
               fields: ['text'],
+              type: 'phrase',
+              boost: 6,
+            },
+          },
+          {
+            multi_match: {
+              query: this.checkAndFormateCaseNumber(searchTerms[0]),
+              fields: ['text', 'context'],
               type: 'phrase',
               boost: 3,
             },
           },
           {
             multi_match: {
-              query: this.checkAndFormateCaseNumber(filter.searchTerm),
+              query: filteredTerms.join(' '),
               fields: ['text', 'context'],
-              type: 'phrase',
               boost: 2,
             },
           },
@@ -163,7 +175,6 @@ export class ReferencesService implements OnModuleInit {
             multi_match: {
               query: lemmatizedSearchTerm.trim(),
               fields: ['context', 'text'],
-              type: 'phrase',
             },
           },
         ],

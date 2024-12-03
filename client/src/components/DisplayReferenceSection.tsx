@@ -27,17 +27,16 @@ const DisplayReferenceSection = (props: DisplayReferenceSectionProps) => {
   const getHighlightedSearchTerms = () => {
     const caseNumberPattern =
       /^(?:\d+\s*,?\s*\d+\s*BVerfGE|BVerfGE\s*\d+\s*,?\s*\d+)$/i;
-    if (caseNumberPattern.test(searchTerm || "")) {
-      const formattedCaseNumber = normalizeCaseNumber(searchTerm);
+    if (caseNumberPattern.test(searchTerm[0] || "")) {
+      const formattedCaseNumber = normalizeCaseNumber(searchTerm[0]);
       return [
-        searchTerm,
+        ...searchTerm,
         lemmatizedSearchTerm,
         citationQuery,
         formattedCaseNumber,
-        formattedCaseNumber?.replace(/BVerfGE(\d+),(\d+)/, "BVerfGE $1, $2"),
       ];
     }
-    return [searchTerm, lemmatizedSearchTerm, citationQuery];
+    return [...searchTerm, lemmatizedSearchTerm, citationQuery];
   };
 
   const includesQuery = (text: string | undefined) =>

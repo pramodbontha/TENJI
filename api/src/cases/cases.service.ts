@@ -3,7 +3,7 @@ import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { FilterCasesQueryDto } from './dto/filter-cases-query.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import axios from 'axios';
-import { normalizeCaseNumber } from 'src/utils/helpers';
+import { getSearchTerms, normalizeCaseNumber } from 'src/utils/helpers';
 
 @Injectable()
 export class CasesService implements OnModuleInit {
@@ -90,12 +90,22 @@ export class CasesService implements OnModuleInit {
         body: {
           mappings: {
             properties: {
-              caseName: { type: 'text' },
+              caseName: {
+                type: 'text',
+              },
               number: { type: 'text' },
-              judgment: { type: 'text' },
-              facts: { type: 'text' },
-              reasoning: { type: 'text' },
-              headnotes: { type: 'text' },
+              judgment: {
+                type: 'text',
+              },
+              facts: {
+                type: 'text',
+              },
+              reasoning: {
+                type: 'text',
+              },
+              headnotes: {
+                type: 'text',
+              },
               year: { type: 'integer' },
               decision_type: { type: 'text' },
               citing_cases: {
@@ -125,19 +135,38 @@ export class CasesService implements OnModuleInit {
   }
 
   async searchCasesByNumber(filter: FilterCasesQueryDto) {
-    const { searchTerm: caseNumber, startYear, endYear, decisionType } = filter;
+    const { searchTerm, startYear, endYear, decisionType } = filter;
     const searchFieldsPass = [];
+    const searchTerms = getSearchTerms(searchTerm);
     let isFiltersEmpty = true;
-    const normalizedCaseNumber = normalizeCaseNumber(caseNumber);
-    if (filter.judgment) searchFieldsPass.push('judgment', 'judgment_lemma');
-    if (filter.facts) searchFieldsPass.push('facts', 'facts_lemma');
-    if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
-    if (filter.headnotes) searchFieldsPass.push('headnotes', 'headnotes_lemma');
+    const normalizedCaseNumber = normalizeCaseNumber(searchTerms[0]);
+    if (filter.judgment)
+      searchFieldsPass.push('judgment', 'judgment_lemma', 'judgment.keyword');
+    if (filter.facts)
+      searchFieldsPass.push('facts', 'facts_lemma', 'facts.keyword');
+    if (filter.reasoning)
+      searchFieldsPass.push(
+        'reasoning',
+        'reasoning_lemma',
+        'reasoning.keyword',
+      );
+    if (filter.headnotes)
+      searchFieldsPass.push(
+        'headnotes',
+        'headnotes_lemma',
+        'headnotes.keyword',
+      );
     const sort: any = [{ citing_cases: { order: 'desc' } }];
     this.logger.log(`normalizedCaseNumber: ${normalizedCaseNumber}`);
 
+    const secondSearchTerm = searchTerms
+      .filter((element) => !element.startsWith('BVerfGE'))
+      .join(' ');
+
     if (searchFieldsPass.length === 0) {
       searchFieldsPass.push(
+        'name',
+        'name_lemma',
         'judgment',
         'judgment_lemma',
         'facts',
@@ -146,6 +175,11 @@ export class CasesService implements OnModuleInit {
         'reasoning_lemma',
         'headnotes',
         'headnotes_lemma',
+        'judgment.keyword',
+        'facts.keyword',
+        'reasoning.keyword',
+        'headnotes.keyword',
+        'name.keyword',
       );
     } else if (searchFieldsPass.length > 0) {
       isFiltersEmpty = false;
@@ -233,14 +267,42 @@ export class CasesService implements OnModuleInit {
         return bHasName - aHasName;
       });
 
+    const thirdQuery: any = {
+      bool: {
+        must: {
+          multi_match: {
+            query: secondSearchTerm,
+            fields: searchFieldsPass,
+          },
+        },
+        filter: [yearRangeFilter, decisionTypeFilter].filter(Boolean),
+      },
+    };
+    const thirdQueryResult = await this.elasticsearchService.search({
+      index: 'cases',
+      body: {
+        query: thirdQuery,
+        sort,
+        from: 0,
+        size: 4000,
+      },
+    });
+
+    const thirdQueryHits = thirdQueryResult.hits.hits
+      .map((hit) => hit._source)
+      .sort((a, b) => {
+        const aHasName = a['caseName'] ? 1 : 0;
+        const bHasName = b['caseName'] ? 1 : 0;
+        return bHasName - aHasName;
+      });
+
     let combinedResults = [];
     if (isFiltersEmpty) {
       combinedResults = [
         ...new Map(
-          [...firstQueryHits, ...secondQueryHits].map((item) => [
-            item['number'],
-            item,
-          ]),
+          [...firstQueryHits, ...secondQueryHits, ...thirdQueryHits].map(
+            (item) => [item['number'], item],
+          ),
         ).values(),
       ];
     } else {
@@ -281,10 +343,22 @@ export class CasesService implements OnModuleInit {
     }
 
     // Build search fields based on selected boolean filters
-    if (filter.judgment) searchFieldsPass.push('judgment', 'judgment_lemma');
-    if (filter.facts) searchFieldsPass.push('facts', 'facts_lemma');
-    if (filter.reasoning) searchFieldsPass.push('reasoning', 'reasoning_lemma');
-    if (filter.headnotes) searchFieldsPass.push('headnotes', 'headnotes_lemma');
+    if (filter.judgment)
+      searchFieldsPass.push('judgment', 'judgment_lemma', 'judgment.keyword');
+    if (filter.facts)
+      searchFieldsPass.push('facts', 'facts_lemma', 'facts.keyword');
+    if (filter.reasoning)
+      searchFieldsPass.push(
+        'reasoning',
+        'reasoning_lemma',
+        'reasoning.keyword',
+      );
+    if (filter.headnotes)
+      searchFieldsPass.push(
+        'headnotes',
+        'headnotes_lemma',
+        'headnotes.keyword',
+      );
 
     const sort: any = [{ citing_cases: { order: 'desc' } }];
 
@@ -294,6 +368,8 @@ export class CasesService implements OnModuleInit {
     if (searchFieldsPass.length === 0) {
       searchFieldsPass.push(
         'number',
+        'name',
+        'name_lemma',
         'judgment',
         'judgment_lemma',
         'facts',
@@ -302,6 +378,11 @@ export class CasesService implements OnModuleInit {
         'reasoning_lemma',
         'headnotes',
         'headnotes_lemma',
+        'judgment.keyword',
+        'facts.keyword',
+        'reasoning.keyword',
+        'headnotes.keyword',
+        'name.keyword',
       );
     } else if (searchFieldsPass.length > 0) {
       isFiltersEmpty = false;
@@ -381,27 +462,20 @@ export class CasesService implements OnModuleInit {
           const bHasName = b['caseName'] ? 1 : 0;
           return bHasName - aHasName;
         });
+
+      console.log(getSearchTerms(updatedSearchTerm.trim()));
       const secondQuery: any = {
         ...baseFilter,
         bool: {
           ...baseFilter.bool,
-          should: [
-            {
-              multi_match: {
-                query: updatedSearchTerm.trim(),
-                fields: searchFieldsPass,
-                type: 'phrase',
-                boost: 10,
-              },
+          should: getSearchTerms(updatedSearchTerm.trim()).map((term) => ({
+            multi_match: {
+              query: term,
+              fields: searchFieldsPass,
+              type: 'phrase',
+              boost: 10,
             },
-            {
-              multi_match: {
-                query: lemmatizedSearchTerm,
-                fields: searchFieldsPass,
-                type: 'phrase',
-              },
-            },
-          ],
+          })),
         },
       };
 
@@ -426,19 +500,21 @@ export class CasesService implements OnModuleInit {
       let combinedResults = [];
       if (isFiltersEmpty) {
         combinedResults = [
-          ...firstQueryHits,
-          ...secondQueryHits.filter(
-            (item) =>
-              !firstQueryHits.some((hit) => hit['number'] === item['number']),
-          ),
+          ...new Map(
+            [...firstQueryHits, ...secondQueryHits].map((item) => [
+              item['number'],
+              item,
+            ]),
+          ).values(),
         ];
       } else {
         combinedResults = [
-          ...secondQueryHits,
-          ...firstQueryHits.filter(
-            (item) =>
-              !firstQueryHits.some((hit) => hit['number'] === item['number']),
-          ),
+          ...new Map(
+            [...secondQueryHits, ...firstQueryHits].map((item) => [
+              item['number'],
+              item,
+            ]),
+          ).values(),
         ];
       }
 

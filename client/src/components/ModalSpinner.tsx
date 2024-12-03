@@ -1,8 +1,9 @@
 import { useAppSelector } from "@/redux/hooks";
+import { RootState } from "@/redux/store";
 import { Modal, Spin } from "antd";
 
 const ModalSpinner = () => {
-  const { isArticleLoading } = useAppSelector((state) => state.articles);
+  const { isSearching } = useAppSelector((state: RootState) => state.searchBar);
 
   const contentStyle: React.CSSProperties = {
     padding: 50,
@@ -12,12 +13,7 @@ const ModalSpinner = () => {
 
   const content = <div style={contentStyle} />;
   return (
-    <Modal
-      open={isArticleLoading}
-      footer={null}
-      closable={false}
-      centered={true}
-    >
+    <Modal open={isSearching} footer={null} closable={false} centered={true}>
       <Spin tip="Searching..." size="large">
         {content}
       </Spin>

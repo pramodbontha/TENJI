@@ -10,21 +10,20 @@ import { FilterModal } from "@/components";
 import { useState, KeyboardEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLazyGetFilteredArticlesQuery } from "@/services/ArticleApi";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  setArticleCount,
-  setArticles,
-  setIsArticleLoading,
-} from "@/slices/ArticleSlice";
+import { useAppDispatch } from "@/redux/hooks";
+import { setArticleCount, setArticles } from "@/slices/ArticleSlice";
 import { useLazyGetFilteredCasesQuery } from "@/services/CaseApi";
 import { setCaseCount, setCases } from "@/slices/CaseSlice";
 import { setReferenceCount, setReferences } from "@/slices/ReferenceSlice";
-import { setLemmatizedQuery, setQuery } from "@/slices/SearchBarSlice";
+import {
+  setIsSearching,
+  setLemmatizedQuery,
+  setQuery,
+} from "@/slices/SearchBarSlice";
 import _ from "lodash";
 import { setFormValues } from "@/slices/FormSlice";
 import { useLazyGetFilteredReferencesWithQueriesQuery } from "@/services/ReferenceApi";
 import { useTranslation } from "react-i18next";
-import { RootState } from "@/redux/store";
 import { useLazyGetLemmatizedQueryQuery } from "@/services/CommonApi";
 
 const SearchBar = () => {
@@ -35,7 +34,6 @@ const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [values, setValues] = useState<any>({});
-  const searchBar = useAppSelector((state: RootState) => state.searchBar);
   const [fetchFilteredArticles] = useLazyGetFilteredArticlesQuery();
   const [fetchFilteredCases] = useLazyGetFilteredCasesQuery();
   const [fetchFilteredReferences] =
@@ -65,22 +63,58 @@ const SearchBar = () => {
   };
 
   const clearCache = () => {
-    if (searchTerm !== searchBar.query) {
-      dispatch(setArticles([]));
-      dispatch(setCases([]));
-      dispatch(setReferences([]));
+    dispatch(setArticles([]));
+    dispatch(setCases([]));
+    dispatch(setReferences([]));
+  };
+
+  const getSearchTerms = (searchTerm: string) => {
+    const regex = /BVerfGE\s?\d+(,?\s?\d+)|Art\.?\s?\d+\s\w+/i;
+    const match = searchTerm.match(regex);
+
+    if (match) {
+      const mainPart = match[0].replace(/\s+/g, " ").trim(); // Normalize spaces in the matched part
+
+      // Check if the main part is "BVerfGE" or "Art" and generate variations accordingly
+      let variations: string[] = [];
+      if (/^BVerfGE/i.test(mainPart)) {
+        // Split into parts to generate BVerfGE variations
+        const caseParts = mainPart.split(/\s+/); // Split by spaces
+        const caseNumber = caseParts[1]; // First number
+        const additionalNumber = caseParts[2] || ""; // Second number, if present
+
+        variations = [
+          `${caseParts[0]} ${caseNumber} ${additionalNumber}`.trim(), // "BVerfGE 18 85"
+          `${caseParts[0]}${caseNumber}, ${additionalNumber}`.trim(), // "BVerfGE18, 85"
+          `${caseParts[0]} ${caseNumber}, ${additionalNumber}`.trim(), // "BVerfGE 18, 85"
+        ];
+      } else if (/^Art/i.test(mainPart)) {
+        // Normalize "Art." to ensure consistent formatting
+        const normalizedMainPart = mainPart
+          .replace(/^Art\.?\s?/, "Art. ")
+          .trim();
+        variations = [normalizedMainPart];
+      }
+
+      // Remove the matched part from the searchTerm
+      const remainingPart = searchTerm.replace(match[0], "").trim();
+      const remainingWords = remainingPart ? remainingPart.split(/\s+/) : []; // Split remaining words by spaces
+
+      return [...variations, ...remainingWords]; // Combine variations and remaining words
     }
+
+    // Fallback: if no pattern is found, split the entire search term
+    return searchTerm.split(/\s+/);
   };
 
   const handleSearch = async () => {
     try {
-      dispatch(setQuery(searchTerm));
+      dispatch(setQuery(getSearchTerms(searchTerm)));
 
       const lemmatizedQuery = await fetchLemmatizedQuery(searchTerm);
-      console.log(lemmatizedQuery);
       lemmatizedQuery.data &&
         dispatch(setLemmatizedQuery(lemmatizedQuery.data));
-      dispatch(setIsArticleLoading(true));
+      dispatch(setIsSearching(true));
       clearCache();
       navigate("/search");
       const articleFilter = {
@@ -138,7 +172,7 @@ const SearchBar = () => {
       filteredReferences &&
         filteredReferences.total !== undefined &&
         dispatch(setReferenceCount(filteredReferences.total));
-      dispatch(setIsArticleLoading(false));
+      dispatch(setIsSearching(false));
     } catch (error) {
       console.error(error);
     }
@@ -154,7 +188,7 @@ const SearchBar = () => {
   };
 
   const navigateToHomePage = () => {
-    dispatch(setQuery(""));
+    dispatch(setQuery([]));
     setSearchTerm("");
     navigate("/");
   };

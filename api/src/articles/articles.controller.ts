@@ -40,14 +40,13 @@ export class ArticlesController {
         `Filtering articles with query: ${JSON.stringify(filterDto)}`,
       );
       const articleNumberPattern =
-        /^(Art\.\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*GG$/i;
+        /(?:^|\s)(Art\.?\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*(GG|Grundgesetz)(?:\s|$)/i;
 
       const isArticleNumber = filterDto.searchTerm
         ? articleNumberPattern.test(filterDto.searchTerm.trim())
         : false;
 
       if (isArticleNumber) {
-        console.log('Searching by article number');
         const articles =
           await this.articlesService.searchArticlesByNumber(filterDto);
         return articles;
@@ -56,6 +55,7 @@ export class ArticlesController {
         return articles;
       }
     } catch (error) {
+      this.logger.error(error);
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

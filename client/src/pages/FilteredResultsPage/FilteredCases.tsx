@@ -9,6 +9,7 @@ import { CaseCard, CaseModal, CitationsModal } from "@/components";
 import { useLazyGetFilteredCasesQuery } from "@/services/CaseApi";
 import { useTranslation } from "react-i18next";
 import { setCitationsMenu } from "@/slices/CitationsSlice";
+import { setIsSearching } from "@/slices/SearchBarSlice";
 
 const FilteredCases = () => {
   const [isCaseModelOpen, setIsCaseModelOpen] = useState(false);
@@ -38,13 +39,14 @@ const FilteredCases = () => {
     pageNumber,
     newPageSize
   ) => {
+    dispatch(setIsSearching(true));
     setCurrentPage(pageNumber);
     if (newPageSize !== pageSize) {
       setPageSize(newPageSize);
     }
     try {
       const { data: filteredCases } = await fetchFilteredCases({
-        searchTerm: query,
+        searchTerm: query.join(" "),
         name: values.caseName,
         number: values.caseNumber,
         judgment: values.caseJudgement,
@@ -58,6 +60,7 @@ const FilteredCases = () => {
         decisionType: values.caseDecision,
       });
       filteredCases && dispatch(setCases(filteredCases.cases));
+      dispatch(setIsSearching(false));
     } catch (error) {
       console.error(error);
     }

@@ -13,7 +13,7 @@ const { Item } = Menu;
 const FilteredResultsPage = () => {
   const [selectedKey, setSelectedKey] = useState("articles");
 
-  const { articles, articlesCount, isArticleLoading } = useAppSelector(
+  const { articles, articlesCount } = useAppSelector(
     (state: RootState) => state.articles
   );
   const { cases, casesCount } = useAppSelector(
@@ -22,6 +22,8 @@ const FilteredResultsPage = () => {
   const { references, referencesCount } = useAppSelector(
     (state: RootState) => state.references
   );
+
+  const { isSearching } = useAppSelector((state: RootState) => state.searchBar);
 
   const { t } = useTranslation();
 
@@ -63,7 +65,7 @@ const FilteredResultsPage = () => {
           </div>
         </div>
         <div className="flex-grow">
-          {isArticleLoading && (
+          {isSearching && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
               <Spin tip="Searching" size="large">
                 {content}
