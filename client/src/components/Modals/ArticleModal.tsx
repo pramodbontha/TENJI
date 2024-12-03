@@ -57,7 +57,9 @@ const ArticleModal = (props: ArticleModalProps) => {
               <div className="h-[450px] overflow-y-auto scrollbar-rounded">
                 <ModalSearchTermHighlighter
                   searchWords={
-                    searchBar.query[0].trim() !== "" ? [...searchBar.query] : []
+                    searchBar.query[0] && searchBar.query[0].trim() !== ""
+                      ? [...searchBar.query]
+                      : []
                   }
                   textToHighlight={article.text}
                 />
