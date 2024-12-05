@@ -281,9 +281,9 @@ export class ReferencesService implements OnModuleInit {
     this.logger.log(nextToc);
 
     const query = `MATCH (n:Reference)
-         WHERE toLower(n.context) CONTAINS toLower($sectionId)
-         OR n.id = $sectionId
-          OR toLower(n.next_toc) CONTAINS toLower($nextToc)
+         
+         where n.id contains $sectionId
+          
          RETURN n`;
 
     const params = { sectionId, nextToc };
