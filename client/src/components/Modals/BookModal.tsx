@@ -3,6 +3,7 @@ import { useLazyGetFilteredReferencesQuery } from "@/services/ReferenceApi";
 import { Book, Reference } from "@/types";
 import {
   Breadcrumb,
+  Button,
   Card,
   Col,
   Input,
@@ -12,11 +13,13 @@ import {
   Pagination,
   PaginationProps,
   Row,
+  Space,
 } from "antd";
 import { ExportOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
+import ReferenceModal from "./ReferenceModal";
 
 interface BookModalProps {
   book?: Book;
@@ -31,6 +34,7 @@ const BookModal = (props: BookModalProps) => {
   const { book, isOpen, reference, onClose } = props;
   const [selectedKey, setSelectedKey] = useState("articles");
   const [updatedSections, setUpdatedSections] = useState<Book[]>([]);
+  const [sections, setSections] = useState<Book[]>([]);
 
   // let { data: sections } = useGetSectionsInTocQuery(book?.id || "");
   const [breadCrumbItems, setBreadCrumbItems] = useState<string[]>([]);
@@ -48,6 +52,9 @@ const BookModal = (props: BookModalProps) => {
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+
+  const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
+  const [selectedReference, setSelectedReference] = useState({} as Reference);
 
   const includesQuery = (text: string) => {
     return (
@@ -93,9 +100,18 @@ const BookModal = (props: BookModalProps) => {
       const initialId = reference?.id || book?.id;
 
       if (initialId) {
-        const { data: sections } = await getSectionsInToc(initialId);
-        if (sections?.length) {
-          setUpdatedSections(sections);
+        const { data: fetchedSections } = await getSectionsInToc(initialId);
+        if (fetchedSections?.length) {
+          setUpdatedSections(fetchedSections);
+          const newSections = [
+            ...new Map(
+              [...sections, ...fetchedSections].map((item) => [
+                item.sectionId,
+                item,
+              ])
+            ).values(),
+          ];
+          setSections(newSections);
         }
         const { data: references } = await getFilteredReferences(initialId);
         references && setReferences(references);
@@ -133,6 +149,15 @@ const BookModal = (props: BookModalProps) => {
     setBreadCrumbItems(sectionQueryPath.split(">"));
     if (updatedSections?.length) {
       setUpdatedSections(updatedSections);
+      const newSections = [
+        ...new Map(
+          [...sections, ...updatedSections].map((item) => [
+            item.sectionId,
+            item,
+          ])
+        ).values(),
+      ];
+      setSections(newSections);
     } else {
       setUpdatedSections([]);
     }
@@ -205,6 +230,33 @@ const BookModal = (props: BookModalProps) => {
     setPaginatedReferences(paginatedReferences);
   };
 
+  const openWikiBookLink = (weblink: string) => {
+    const filteredSection = sections.find((section) => {
+      const finalSection = section.id.split(">").pop();
+      return finalSection === weblink;
+    });
+    if (filteredSection?.weblink) {
+      window.open(filteredSection?.weblink, "_blank");
+    } else {
+      if (sections[0].id.includes("Examenswissen")) {
+        window.open(
+          "https://de.wikibooks.org/wiki/OpenRewi/_Grundrechte-Lehrbuch",
+          "_blank"
+        );
+      } else {
+        window.open(
+          "https://de.wikibooks.org/wiki/OpenRewi/_Grundrechte-Fallbuch",
+          "_blank"
+        );
+      }
+    }
+  };
+
+  const openReferenceModal = (reference: Reference) => {
+    setSelectedReference(reference);
+    setIsReferenceModalOpen(true);
+  };
+
   return (
     <>
       <Modal
@@ -227,14 +279,14 @@ const BookModal = (props: BookModalProps) => {
                           {item}
                         </a>
                       </div>
-                      <a>
+                      <a onClick={() => openWikiBookLink(item)}>
                         <ExportOutlined />
                       </a>
                     </div>
                   ) : (
                     <div className="flex">
                       <div className="mr-2">{item}</div>
-                      <a>
+                      <a onClick={() => openWikiBookLink(item)}>
                         <ExportOutlined />
                       </a>
                     </div>
@@ -325,6 +377,19 @@ const BookModal = (props: BookModalProps) => {
                                   }
                                 />
                               }
+                              extra={
+                                <>
+                                  <Space>
+                                    <Button
+                                      onClick={() =>
+                                        openReferenceModal(reference)
+                                      }
+                                    >
+                                      {t("in-the-text")}
+                                    </Button>
+                                  </Space>
+                                </>
+                              }
                               className="h-44 drop-shadow-md"
                             >
                               <div>
@@ -355,6 +420,13 @@ const BookModal = (props: BookModalProps) => {
           </div>
         </div>
       </Modal>
+      {isReferenceModalOpen && (
+        <ReferenceModal
+          reference={selectedReference}
+          isOpen={isReferenceModalOpen}
+          onClose={() => setIsReferenceModalOpen(false)}
+        />
+      )}
     </>
   );
 };

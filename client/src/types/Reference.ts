@@ -4,6 +4,7 @@ export interface Reference {
   next_toc: string;
   resource: string;
   text: string;
+  weblink?: string;
 }
 
 export interface ReferenceFilter {

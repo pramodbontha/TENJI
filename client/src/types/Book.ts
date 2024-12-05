@@ -3,4 +3,5 @@ export interface Book {
   id: string;
   next_toc: string;
   text: string;
+  weblink?: string;
 }

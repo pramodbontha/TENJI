@@ -189,6 +189,7 @@ const SearchBar = () => {
 
   const navigateToHomePage = () => {
     dispatch(setQuery([]));
+    dispatch(setLemmatizedQuery(""));
     setSearchTerm("");
     navigate("/");
   };
