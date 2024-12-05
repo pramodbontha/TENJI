@@ -40,7 +40,7 @@ export class ArticlesController {
         `Filtering articles with query: ${JSON.stringify(filterDto)}`,
       );
       const articleNumberPattern =
-        /(?:^|\s)(Art\.?\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)*\s*(GG|Grundgesetz)(?:\s|$)/i;
+        /(?:^|\s)(Art\.?\s*)?\d+(\s*\(?[A-Za-z0-9]+\.\)?)?\s*(?:[IVXLCDM]+)?\s*(GG|Grundgesetz)(?:\s|$)/i;
 
       const isArticleNumber = filterDto.searchTerm
         ? articleNumberPattern.test(filterDto.searchTerm.trim())

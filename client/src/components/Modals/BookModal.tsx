@@ -172,8 +172,10 @@ const BookModal = (props: BookModalProps) => {
     const searchTerm = e.target.value;
     if (searchTerm && searchTerm.trim() !== "") {
       setSearchTerm(searchTerm);
-      const filteredReferences = references.filter((reference) =>
-        reference.text.toLowerCase().includes(searchTerm.toLowerCase())
+      const filteredReferences = references.filter(
+        (reference) =>
+          reference.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          reference.context.toLowerCase().includes(searchTerm.toLowerCase())
       );
       const sortedReferences = filteredReferences.sort((a, b) => {
         const lowerCaseSearchTerm = searchTerm.toLowerCase();

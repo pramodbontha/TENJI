@@ -1,6 +1,0 @@
-[build]
-  command = "npm run build"
-  publish = "dist"
-
-[build.environment]
-  VITE_API_URL = "https://63.176.36.189/"

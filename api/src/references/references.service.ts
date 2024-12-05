@@ -75,6 +75,16 @@ export class ReferencesService implements OnModuleInit {
       this.logger.log(
         `${references.length} references indexed in Elasticsearch.`,
       );
+      this.logger.log('Lemmatizing references');
+      await this.lemmatizeReferences();
+    }
+  }
+
+  private async lemmatizeReferences() {
+    try {
+      await axios.get('http://lemmatizer:5000/lemmatize-references');
+    } catch (error) {
+      this.logger.error('Failed to lemmatize references', error.stack);
     }
   }
 
@@ -91,9 +101,33 @@ export class ReferencesService implements OnModuleInit {
         body: {
           mappings: {
             properties: {
-              context: { type: 'text' },
-              text: { type: 'text' },
+              context: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              },
+              text: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              },
+              next_toc: { type: 'text' }, // Used for the 'next_toc' logic
+              id: { type: 'keyword' },
               resource: { type: 'keyword' },
+              context_lemma: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              }, // Lemmatized field
+              text_lemma: {
+                type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
+              },
             },
           },
         },
@@ -174,7 +208,7 @@ export class ReferencesService implements OnModuleInit {
           {
             multi_match: {
               query: lemmatizedSearchTerm.trim(),
-              fields: ['context', 'text'],
+              fields: ['context', 'context_lemma', 'text', 'text_lemma'],
             },
           },
         ],
@@ -244,8 +278,9 @@ export class ReferencesService implements OnModuleInit {
 
     // Join the remaining parts back together
     const nextToc = splitString.join(' > ');
+    this.logger.log(nextToc);
 
-    const query = `MATCH (n:Reference) 
+    const query = `MATCH (n:Reference)
          WHERE toLower(n.context) CONTAINS toLower($sectionId)
          OR n.id = $sectionId
           OR toLower(n.next_toc) CONTAINS toLower($nextToc)
@@ -255,5 +290,41 @@ export class ReferencesService implements OnModuleInit {
     const result = await this.neo4jService.runQuery(query, params);
 
     return result.map((record) => record.get('n').properties);
+    // const query = {
+    //   index: 'references',
+    //   body: {
+    //     query: {
+    //       bool: {
+    //         should: [
+    //           {
+    //             match: {
+    //               context: {
+    //                 query: sectionId,
+    //                 operator: 'and', // Ensure all terms match
+    //               },
+    //             },
+    //           },
+    //           {
+    //             term: { id: sectionId }, // Exact match for the id field
+    //           },
+    //           {
+    //             match: {
+    //               next_toc: {
+    //                 query: nextToc,
+    //                 operator: 'and', // Ensure all terms match
+    //               },
+    //             },
+    //           },
+    //         ],
+    //       },
+    //     },
+    //   },
+    // };
+
+    // // Execute the query
+    // const result = await this.elasticsearchService.search(query);
+
+    // // Map the results to return the document properties
+    // return result.hits.hits.map((hit) => hit._source);
   }
 }

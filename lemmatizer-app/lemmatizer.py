@@ -84,6 +84,33 @@ def lemmatize_and_update_articles():
 
     return "lemmatized and updated articles"
 
+@app.route('/lemmatize-references', methods=['GET'])
+def lemmatize_and_update_references():
+    # Retrieve all cases
+    es_query = {
+        "query": {
+            "match_all": {}
+        }
+    }
+    
+    references = es.search(index='references', body=es_query)
+
+    for reference in references['hits']['hits']:
+        lemmatized_context = lemmatize_text_es(reference["_source"]["context"])
+        lemmatized_text = lemmatize_text_es(reference["_source"]["text"])
+
+        # Update the document in Elasticsearch with lemmatized fields
+        es.update(index='references', id=reference["_id"], body={
+            "doc": {
+                "context_lemma": lemmatized_context,
+                "text_lemma": lemmatized_text,
+            }
+        })
+    
+    es.indices.refresh(index='references')
+
+    return "lemmatized and updated references"
+
 if __name__ == '__main__':
     # Run the Flask server on port 5000
     app.run(host='0.0.0.0', port=5000)

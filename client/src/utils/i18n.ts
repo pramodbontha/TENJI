@@ -67,6 +67,7 @@ const resources = {
       "in-the-book": "In the Book",
       "search-examples":
         "Search Examples: for case name 'Nassauskiesung', case number 'BVerfGE 58 300', article name 'Erbrecht' and article number 'Art. 14 GG'.",
+      publisher: "Publisher",
     },
   },
   de: {
@@ -134,6 +135,7 @@ const resources = {
       "in-the-book": "In das Buch",
       "search-examples":
         "Suchbeispiele: für Fallname 'Nassauskiesung', Fallnummer 'BVerfGE 58 300', Artikelname 'Erbrecht' und Artikelnummer 'Art. 14 GG'.",
+      publisher: "Verlag",
     },
   },
   "pt-PT": {
@@ -201,6 +203,7 @@ const resources = {
       "in-the-book": "No Livro",
       "search-examples":
         "Exemplos de Pesquisa: para nome do caso 'Nassauskiesung', número do caso 'BVerfGE 58 300', nome do artigo 'Erbrecht' e número do artigo 'Art. 14 GG'.",
+      publisher: "Editora",
     },
   },
 };

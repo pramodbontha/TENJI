@@ -2,7 +2,7 @@ import { BookModal } from "@/components";
 import { useGetBooksQuery } from "@/services/BookApi";
 import { Book as BookType } from "@/types";
 import { CaretLeftOutlined, CaretRightOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Row } from "antd";
+import { Button, Card, Col, Row, Space } from "antd";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -73,7 +73,20 @@ const Book = () => {
                         </Button>
                       }
                     >
-                      <div className="line-clamp-3">{book.text}</div>
+                      <div className="flex">
+                        <Space direction="vertical">
+                          <div>
+                            <span className="font-semibold">
+                              {t("publisher")}:
+                            </span>
+                            <span className="pl-2">De Gruyter</span>
+                          </div>
+                          <div>
+                            <span className="font-semibold">{t("year")}:</span>
+                            <span className="pl-2">{2022}</span>
+                          </div>
+                        </Space>
+                      </div>
                     </Card>
                   </Col>
                 ))}
