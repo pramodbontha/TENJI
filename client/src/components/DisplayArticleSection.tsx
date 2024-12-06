@@ -54,14 +54,14 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
   const selectedSection = sectionWithQuery || sectionWithText;
 
   const displayText = (text: string, isSearch: boolean) => {
-    const slicedText = isSearch ? text.slice(0, 240) : text.slice(0, 200);
+    const slicedText = isSearch ? text.slice(0, 600) : text.slice(0, 200);
     return text.length > 240 ? `${slicedText}...` : text;
   };
 
   useEffect(() => {
     if (selectedSection?.text) {
       const clampLines = 3; // Number of lines to clamp
-      const maxCharsPerLine = 80; // Approximate characters per line, adjust based on design
+      const maxCharsPerLine = 200; // Approximate characters per line, adjust based on design
       const totalCharsVisible = clampLines * maxCharsPerLine;
 
       const text = selectedSection.text;
@@ -73,8 +73,10 @@ const DisplayArticleSection = (props: DisplayArticleSectionProps) => {
 
       if (foundTerm) {
         const searchIndex = text.toLowerCase().indexOf(foundTerm.toLowerCase());
+        const textEndTerm = text.split(" ").pop();
+        const textEndIndex = text.lastIndexOf(textEndTerm!);
 
-        if (searchIndex > totalCharsVisible) {
+        if (searchIndex > totalCharsVisible && searchIndex < textEndIndex) {
           const start = Math.max(
             0,
             searchIndex - Math.floor(totalCharsVisible / 2)
