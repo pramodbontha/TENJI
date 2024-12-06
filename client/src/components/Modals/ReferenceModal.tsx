@@ -5,6 +5,9 @@ import { RootState } from "@/redux/store";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 import { normalizeCaseNumber } from "@/utils/helpers";
+import BookModal from "./BookModal";
+import { useState } from "react";
+import ModalSearchTermHighlighter from "../ModalSearchTermHighlighter";
 
 interface ReferenceModalProps {
   reference: Reference;
@@ -14,6 +17,7 @@ interface ReferenceModalProps {
 
 const ReferenceModal = (props: ReferenceModalProps) => {
   const { reference, isOpen, onClose } = props;
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const { query, lemmatizedQuery, citationQuery } = useAppSelector(
     (state: RootState) => state.searchBar
   );
@@ -55,15 +59,19 @@ const ReferenceModal = (props: ReferenceModalProps) => {
         footer={null}
       >
         <div className="h-[520px]">
+          <a
+            onClick={() => setIsBookModalOpen(true)}
+            className="bg-gray-200 text-gray-500  p-1 rounded-lg hover:text-black hover:underline"
+          >
+            {reference.id}
+          </a>
           <Tabs defaultActiveKey="1" className="h-full">
             <Tabs.TabPane tab={t("context")} key="1" className="h-full">
               <div className="h-[450px] overflow-y-auto scrollbar-rounded">
-                <Highlighter
-                  highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                <ModalSearchTermHighlighter
                   searchWords={
                     getHighlightedSearchTerms().filter(Boolean) as string[]
                   }
-                  autoEscape={true}
                   textToHighlight={reference.context}
                 />
               </div>
@@ -71,6 +79,13 @@ const ReferenceModal = (props: ReferenceModalProps) => {
           </Tabs>
         </div>
       </Modal>
+      {isBookModalOpen && (
+        <BookModal
+          reference={reference}
+          isOpen={isBookModalOpen}
+          onClose={() => setIsBookModalOpen(false)}
+        />
+      )}
     </>
   );
 };

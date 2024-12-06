@@ -92,19 +92,22 @@ export class CasesService implements OnModuleInit {
             properties: {
               caseName: {
                 type: 'text',
+                fields: {
+                  keyword: { type: 'keyword' }, // For exact matching
+                },
               },
               number: { type: 'text' },
               judgment: {
-                type: 'text',
+                type: 'search_as_you_type',
               },
               facts: {
-                type: 'text',
+                type: 'search_as_you_type',
               },
               reasoning: {
-                type: 'text',
+                type: 'search_as_you_type',
               },
               headnotes: {
-                type: 'text',
+                type: 'search_as_you_type',
               },
               year: { type: 'integer' },
               decision_type: { type: 'text' },
@@ -368,8 +371,7 @@ export class CasesService implements OnModuleInit {
     if (searchFieldsPass.length === 0) {
       searchFieldsPass.push(
         'number',
-        'name',
-        'name_lemma',
+        'caseName',
         'judgment',
         'judgment_lemma',
         'facts',
@@ -429,7 +431,7 @@ export class CasesService implements OnModuleInit {
             {
               multi_match: {
                 query: updatedSearchTerm.trim(),
-                fields: ['caseName', 'name_lemma'],
+                fields: ['caseName', 'caseName.keyword'],
                 type: 'phrase',
                 boost: 10,
               },
@@ -437,8 +439,7 @@ export class CasesService implements OnModuleInit {
             {
               multi_match: {
                 query: lemmatizedSearchTerm,
-                fields: ['caseName', 'name_lemma'],
-                type: 'phrase',
+                fields: ['caseName.keyword'],
               },
             },
           ],
@@ -454,7 +455,7 @@ export class CasesService implements OnModuleInit {
         from: 0,
         size: 4000,
       });
-
+      this.logger.log(`First query: ${JSON.stringify(firstQuery)}`);
       const firstQueryHits = firstQueryResult.hits.hits
         .map((hit) => hit._source)
         .sort((a, b) => {
@@ -462,22 +463,31 @@ export class CasesService implements OnModuleInit {
           const bHasName = b['caseName'] ? 1 : 0;
           return bHasName - aHasName;
         });
-
-      console.log(getSearchTerms(updatedSearchTerm.trim()));
+      this.logger.log(
+        `First query hits: ${JSON.stringify(firstQueryHits.length)}`,
+      );
+      this.logger.log(getSearchTerms(updatedSearchTerm.trim()));
       const secondQuery: any = {
         ...baseFilter,
         bool: {
           ...baseFilter.bool,
-          should: getSearchTerms(updatedSearchTerm.trim()).map((term) => ({
-            multi_match: {
-              query: term,
-              fields: searchFieldsPass,
-              type: 'phrase',
-              boost: 10,
-            },
-          })),
+          should: getSearchTerms(updatedSearchTerm.trim()) // Ignore terms with less than 3 words
+            .map((term) => {
+              const isLongPhrase = term.split(' ').length > 3;
+              return {
+                multi_match: {
+                  query: term, // No need to wrap in quotes
+                  fields: searchFieldsPass,
+                  type: 'bool_prefix', // Enables search-as-you-type behavior
+                  boost: isLongPhrase ? 100 : 1, // Higher boost for longer phrases
+                },
+              };
+            }),
+          minimum_should_match: 1, // At least one term must match
         },
       };
+
+      this.logger.log(`Second query: ${JSON.stringify(secondQuery)}`);
 
       const secondQueryResult = await this.elasticsearchService.search({
         index: 'cases',
@@ -497,16 +507,51 @@ export class CasesService implements OnModuleInit {
           return bHasName - aHasName;
         });
 
+      const exactMatchQuery: any = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: updatedSearchTerm.trim(),
+                  fields: searchFieldsPass,
+                  type: 'bool_prefix',
+                },
+              },
+            ],
+          },
+        },
+      };
+      const exactMatchResults = await this.elasticsearchService.search({
+        index: 'cases',
+        body: exactMatchQuery,
+      });
+      const exactMatchHits = exactMatchResults.hits.hits.map(
+        (hit) => hit._source,
+      );
+
+      this.logger.log(
+        `Exact match hits: ${JSON.stringify(exactMatchHits.length)}`,
+      );
       let combinedResults = [];
       if (isFiltersEmpty) {
-        combinedResults = [
-          ...new Map(
-            [...firstQueryHits, ...secondQueryHits].map((item) => [
-              item['number'],
-              item,
-            ]),
-          ).values(),
-        ];
+        if (updatedSearchTerm.split(' ').length > 3) {
+          combinedResults = [
+            ...new Map(
+              [...exactMatchHits, ...firstQueryHits, ...secondQueryHits].map(
+                (item) => [item['number'], item],
+              ),
+            ).values(),
+          ];
+        } else {
+          combinedResults = [
+            ...new Map(
+              [...firstQueryHits, ...exactMatchHits, ...secondQueryHits].map(
+                (item) => [item['number'], item],
+              ),
+            ).values(),
+          ];
+        }
       } else {
         combinedResults = [
           ...new Map(

@@ -71,9 +71,26 @@ const SearchBar = () => {
   const getSearchTerms = (searchTerm: string) => {
     const regex =
       /BVerfGE\s?\d+(,?\s?\d+)?|Art\.?\s?\d+(?:\s?[IVXLCDM]+)?\s?(GG|Grundgesetz)?/i;
+    const germanArticles = [
+      "der",
+      "die",
+      "das",
+      "den",
+      "dem",
+      "des",
+      "ein",
+      "eine",
+      "einen",
+      "einem",
+      "eines",
+      "bei",
+      "und",
+      "auf",
+    ]; // Add more as needed
     const match = searchTerm.match(regex);
 
     let originalRomanArt = null; // To capture the original "Art. <number> V GG"
+    const originalInput = searchTerm.trim(); // Store the original input as is
 
     if (match) {
       const mainPart = match[0].replace(/\s+/g, " ").trim(); // Normalize spaces in the matched part
@@ -111,20 +128,34 @@ const SearchBar = () => {
 
       // Remove the matched part from the searchTerm
       const remainingPart = searchTerm.replace(match[0], "").trim();
-      const remainingWords = remainingPart ? remainingPart.split(/\s+/) : []; // Split remaining words by spaces
+      const remainingWords = remainingPart
+        ? remainingPart
+            .split(/\s+/)
+            .filter((word) => !germanArticles.includes(word.toLowerCase())) // Remove German articles
+        : []; // Split remaining words by spaces and exclude German articles
 
-      const result = [...variations, ...remainingWords]; // Combine variations and remaining words
+      // Combine results
+      const result = [...variations];
 
-      // Append the original Roman numeral version at the end if present
+      // Append original input
+      result.push(originalInput);
+
+      // Append original Roman numeral form if present
       if (originalRomanArt) {
         result.push(originalRomanArt);
       }
 
-      return result;
+      // Append remaining tokens
+      return [...result, ...remainingWords];
     }
 
     // Fallback: if no pattern is found, split the entire search term
-    return searchTerm.split(/\s+/);
+    return [
+      originalInput,
+      // ...searchTerm
+      //   .split(/\s+/)
+      //   .filter((word) => !germanArticles.includes(word.toLowerCase())),
+    ];
   };
 
   const handleSearch = async () => {

@@ -243,8 +243,7 @@ export class ArticlesService implements OnModuleInit {
 
     let searchFieldsPass = [];
 
-    if (filter.name)
-      searchFieldsPass.push('name', 'name_lemma', 'name.keyword');
+    if (filter.name) searchFieldsPass.push('name.keyword');
     if (filter.text)
       searchFieldsPass.push('text', 'text_lemma', 'text.keyword');
 
@@ -266,6 +265,7 @@ export class ArticlesService implements OnModuleInit {
         must: [],
       },
     };
+    const sort: any = [{ citing_cases: { order: 'desc' } }];
 
     // If not an article number, perform lemmatized search
     if (trimmedSearchTerm) {
@@ -274,28 +274,148 @@ export class ArticlesService implements OnModuleInit {
       this.logger.log(`Second search term: ${secondSearchTerm}`);
       const lemmatizedSearchTerm = await this.lemmatizeText(secondSearchTerm);
       this.logger.log(`Trimmed search term: ${trimmedSearchTerm}`);
+      this.logger.log(
+        getSearchTerms(lemmatizedSearchTerm.replace(',', ' '))
+          .slice(1)
+          .join(' '),
+      );
+      const exactMatchQuery = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: trimmedSearchTerm,
+                  fields: ['name.keyword'],
+                },
+              },
+            ],
+          },
+        },
+      };
+      const nameMatchQuery = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: getSearchTerms(lemmatizedSearchTerm.replace(',', ' '))
+                    .slice(1)
+                    .join(' '),
+                  fields: ['name', 'name_lemma'],
+                },
+              },
+            ],
+          },
+        },
+      };
+      const textMatchQuery = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: secondSearchTerm,
+                  fields: ['text', 'text_lemma', 'text.keyword'], // Medium priority for text fields
+                },
+              },
+            ],
+          },
+        },
+      };
 
-      textFieldsQuery.bool = {
-        should: [
-          {
-            multi_match: {
-              query: secondSearchTerm,
-              fields: searchFieldsPass,
-              boost: 2,
-            },
+      const generalMatchQuery = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: getSearchTerms(lemmatizedSearchTerm.replace(',', ' '))
+                    .slice(1)
+                    .join(' '),
+                  fields: searchFieldsPass,
+                },
+              },
+            ],
           },
-          {
-            multi_match: {
-              query: lemmatizedSearchTerm,
-              fields: searchFieldsPass,
-            },
-          },
-        ],
+        },
+      };
+      // Execute Query 1
+      const exactMatchResults = await this.elasticsearchService.search({
+        index: 'articles',
+        body: exactMatchQuery,
+        sort,
+      });
+
+      const nameMatchResults = await this.elasticsearchService.search({
+        index: 'articles',
+        body: nameMatchQuery,
+        sort,
+      });
+
+      // Execute Query 2
+      const textMatchResults = await this.elasticsearchService.search({
+        index: 'articles',
+        body: textMatchQuery,
+        sort,
+      });
+
+      // Execute Query 3
+      const generalMatchResults = await this.elasticsearchService.search({
+        index: 'articles',
+        body: generalMatchQuery,
+        sort,
+      });
+      const exactMatchHits = exactMatchResults.hits.hits.map(
+        (hit) => hit._source,
+      );
+      const nameMatchHits = nameMatchResults.hits.hits
+        .map((hit) => hit._source)
+        .sort((a, b) => {
+          const aHasName = a['caseName'] ? 1 : 0;
+          const bHasName = b['caseName'] ? 1 : 0;
+          return bHasName - aHasName;
+        });
+      const textMatchHits = textMatchResults.hits.hits
+        .map((hit) => hit._source)
+        .sort((a, b) => {
+          const aHasName = a['caseName'] ? 1 : 0;
+          const bHasName = b['caseName'] ? 1 : 0;
+          return bHasName - aHasName;
+        });
+
+      this.logger.log(`textMatchHits hits: ${textMatchHits.length}`);
+
+      const generalMatchHits = generalMatchResults.hits.hits
+        .map((hit) => hit._source)
+        .sort((a, b) => {
+          const aHasName = a['caseName'] ? 1 : 0;
+          const bHasName = b['caseName'] ? 1 : 0;
+          return bHasName - aHasName;
+        });
+      const combinedResults = [
+        ...new Map(
+          [
+            ...exactMatchHits,
+            ...nameMatchHits,
+            ...textMatchHits,
+            ...generalMatchHits,
+          ].map((item) => [item['number'], item]),
+        ).values(),
+      ];
+      const total = combinedResults.length;
+      const from = filter.skip || 0;
+      const size = filter.limit || 10;
+      const paginatedResults = combinedResults.slice(from, from + size);
+
+      // Return the final results with proper pagination
+      return {
+        articles: paginatedResults,
+        total, // Total number of combined results
       };
     }
 
     // Apply sorting (e.g., by citing_cases in descending order)
-    const sort: any = [{ citing_cases: { order: 'desc' } }];
 
     // Pagination: skip and limit
     const from = filter.skip || 0;

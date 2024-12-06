@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useTranslation } from "react-i18next";
 import ReferenceModal from "./ReferenceModal";
+import SearchTermHighlighter from "../SearchTermHighlighter";
 
 interface BookModalProps {
   book?: Book;
@@ -232,10 +233,15 @@ const BookModal = (props: BookModalProps) => {
     setPaginatedReferences(paginatedReferences);
   };
 
-  const openWikiBookLink = (weblink: string) => {
+  const openWikiBookLink = (index: number) => {
+    console.log(sections);
+    let sectionQueryPath = "";
+
+    sectionQueryPath = breadCrumbItems.slice(0, index + 1).join(">");
+    console.log(sectionQueryPath);
+
     const filteredSection = sections.find((section) => {
-      const finalSection = section.id.split(">").pop();
-      return finalSection === weblink;
+      return section?.id.trim() === sectionQueryPath.trim();
     });
     if (filteredSection?.weblink) {
       window.open(filteredSection?.weblink, "_blank");
@@ -281,14 +287,14 @@ const BookModal = (props: BookModalProps) => {
                           {item}
                         </a>
                       </div>
-                      <a onClick={() => openWikiBookLink(item)}>
+                      <a onClick={() => openWikiBookLink(index)}>
                         <ExportOutlined />
                       </a>
                     </div>
                   ) : (
                     <div className="flex">
                       <div className="mr-2">{item}</div>
-                      <a onClick={() => openWikiBookLink(item)}>
+                      <a onClick={() => openWikiBookLink(index)}>
                         <ExportOutlined />
                       </a>
                     </div>
@@ -399,10 +405,8 @@ const BookModal = (props: BookModalProps) => {
                                   {t("context")}:
                                 </div>
                                 <div className="line-clamp-3">
-                                  <Highlighter
-                                    highlightClassName="bg-gray-200 text-black font-bold p-1 rounded-lg"
+                                  <SearchTermHighlighter
                                     searchWords={[searchTerm]}
-                                    autoEscape={true}
                                     textToHighlight={
                                       getHighlightedText(reference.context) ||
                                       ""
