@@ -394,7 +394,7 @@ export class ArticlesService implements OnModuleInit {
 
       let combinedResults = [];
 
-      if (trimmedSearchTerm.split(' ').length > 3) {
+      if (trimmedSearchTerm.split(' ').length > 4) {
         this.logger.log('More than 3 words');
         combinedResults = [
           ...new Map(
