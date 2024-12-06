@@ -115,10 +115,7 @@ export class ArticlesService implements OnModuleInit {
               resource: { type: 'text' },
               name_lemma: { type: 'text' }, // Lemmatized field
               text_lemma: {
-                type: 'text',
-                fields: {
-                  keyword: { type: 'keyword' }, // For exact matching
-                },
+                type: 'search_as_you_type',
               }, // Lemmatized field
             },
           },
@@ -309,14 +306,15 @@ export class ArticlesService implements OnModuleInit {
           },
         },
       };
-      const textMatchQuery = {
+      const textMatchQuery: any = {
         query: {
           bool: {
             should: [
               {
                 multi_match: {
-                  query: secondSearchTerm,
-                  fields: ['text', 'text_lemma', 'text.keyword'], // Medium priority for text fields
+                  query: trimmedSearchTerm,
+                  fields: ['text'], // Medium priority for text fields
+                  type: 'bool_prefix',
                 },
               },
             ],
@@ -357,7 +355,6 @@ export class ArticlesService implements OnModuleInit {
       const textMatchResults = await this.elasticsearchService.search({
         index: 'articles',
         body: textMatchQuery,
-        sort,
       });
 
       // Execute Query 3
@@ -376,13 +373,14 @@ export class ArticlesService implements OnModuleInit {
           const bHasName = b['caseName'] ? 1 : 0;
           return bHasName - aHasName;
         });
-      const textMatchHits = textMatchResults.hits.hits
-        .map((hit) => hit._source)
-        .sort((a, b) => {
-          const aHasName = a['caseName'] ? 1 : 0;
-          const bHasName = b['caseName'] ? 1 : 0;
-          return bHasName - aHasName;
-        });
+      const textMatchHits = textMatchResults.hits.hits.map(
+        (hit) => hit._source,
+      );
+      // .sort((a, b) => {
+      //   const aHasName = a['caseName'] ? 1 : 0;
+      //   const bHasName = b['caseName'] ? 1 : 0;
+      //   return bHasName - aHasName;
+      // });
 
       this.logger.log(`textMatchHits hits: ${textMatchHits.length}`);
 
@@ -393,16 +391,34 @@ export class ArticlesService implements OnModuleInit {
           const bHasName = b['caseName'] ? 1 : 0;
           return bHasName - aHasName;
         });
-      const combinedResults = [
-        ...new Map(
-          [
-            ...exactMatchHits,
-            ...nameMatchHits,
-            ...textMatchHits,
-            ...generalMatchHits,
-          ].map((item) => [item['number'], item]),
-        ).values(),
-      ];
+
+      let combinedResults = [];
+
+      if (trimmedSearchTerm.split(' ').length > 3) {
+        this.logger.log('More than 3 words');
+        combinedResults = [
+          ...new Map(
+            [
+              ...textMatchHits,
+              ...exactMatchHits,
+              ...nameMatchHits,
+              ...generalMatchHits,
+            ].map((item) => [item['number'], item]),
+          ).values(),
+        ];
+      } else {
+        combinedResults = [
+          ...new Map(
+            [
+              ...exactMatchHits,
+              ...textMatchHits,
+              ...nameMatchHits,
+
+              ...generalMatchHits,
+            ].map((item) => [item['number'], item]),
+          ).values(),
+        ];
+      }
       const total = combinedResults.length;
       const from = filter.skip || 0;
       const size = filter.limit || 10;

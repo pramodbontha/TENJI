@@ -234,11 +234,9 @@ const BookModal = (props: BookModalProps) => {
   };
 
   const openWikiBookLink = (index: number) => {
-    console.log(sections);
     let sectionQueryPath = "";
 
     sectionQueryPath = breadCrumbItems.slice(0, index + 1).join(">");
-    console.log(sectionQueryPath);
 
     const filteredSection = sections.find((section) => {
       return section?.id.trim() === sectionQueryPath.trim();

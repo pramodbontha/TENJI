@@ -21,6 +21,8 @@ export const normalizeCaseNumber = (caseNumber: string): string => {
   return caseNumber;
 };
 
+const isLongestTerm = (term: string) => term.split(/\s+/).length > 4;
+
 export const getSearchTerms = (searchTerm: string) => {
   const regex =
     /BVerfGE\s?\d+(,?\s?\d+)?|Art\.?\s?\d+(?:\s?[IVXLCDM]+)?\s?(GG|Grundgesetz)?/i;
@@ -45,7 +47,7 @@ export const getSearchTerms = (searchTerm: string) => {
   let originalRomanArt = null; // To capture the original "Art. <number> V GG"
   const originalInput = searchTerm.trim(); // Store the original input as is
 
-  if (match) {
+  if (match && !isLongestTerm(originalInput)) {
     const mainPart = match[0].replace(/\s+/g, ' ').trim(); // Normalize spaces in the matched part
 
     let variations: string[] = [];
@@ -105,8 +107,8 @@ export const getSearchTerms = (searchTerm: string) => {
   // Fallback: if no pattern is found, split the entire search term
   return [
     originalInput,
-    ...searchTerm
-      .split(/\s+/)
-      .filter((word) => !germanArticles.includes(word.toLowerCase())),
+    // ...searchTerm
+    //   .split(/\s+/)
+    //   .filter((word) => !germanArticles.includes(word.toLowerCase())),
   ];
 };

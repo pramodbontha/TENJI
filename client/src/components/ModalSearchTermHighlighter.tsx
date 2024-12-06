@@ -18,6 +18,13 @@ const ModalSearchTermHighlighter: React.FC<SearchTermHighlighterProps> = ({
     const parsedHtml = parse(text, {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       replace: (domNode: any) => {
+        if (domNode.type === "tag" && domNode.name === "a") {
+          // Replace anchor tag with its text content
+          return (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <>{domNode.children.map((child: any) => child.data).join("")}</>
+          );
+        }
         if (domNode.type === "text") {
           // Use Highlighter for text nodes
           return (
