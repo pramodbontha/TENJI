@@ -68,6 +68,14 @@ const SearchBar = () => {
     dispatch(setReferences([]));
   };
 
+  const isLongestTerm = (term: string) => {
+    const specialKeywords = ["Art", "BVerfGE"];
+    const threshold = specialKeywords.some((keyword) => term.includes(keyword))
+      ? 6
+      : 4;
+    return term.split(/\s+/).length > threshold;
+  };
+
   const getSearchTerms = (searchTerm: string) => {
     const regex =
       /BVerfGE\s?\d+(,?\s?\d+)?|Art\.?\s?\d+(?:\s?[IVXLCDM]+)?\s?(GG|Grundgesetz)?/i;
@@ -92,7 +100,7 @@ const SearchBar = () => {
     let originalRomanArt = null; // To capture the original "Art. <number> V GG"
     const originalInput = searchTerm.trim(); // Store the original input as is
 
-    if (match) {
+    if (match && !isLongestTerm(originalInput)) {
       const mainPart = match[0].replace(/\s+/g, " ").trim(); // Normalize spaces in the matched part
 
       let variations: string[] = [];

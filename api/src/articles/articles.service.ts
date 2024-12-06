@@ -269,7 +269,7 @@ export class ArticlesService implements OnModuleInit {
       const { secondSearchTerm } =
         this.getExtractedSearchTerm(trimmedSearchTerm);
       this.logger.log(`Second search term: ${secondSearchTerm}`);
-      const lemmatizedSearchTerm = await this.lemmatizeText(secondSearchTerm);
+      const lemmatizedSearchTerm = await this.lemmatizeText(trimmedSearchTerm);
       this.logger.log(`Trimmed search term: ${trimmedSearchTerm}`);
       this.logger.log(
         getSearchTerms(lemmatizedSearchTerm.replace(',', ' '))
@@ -328,9 +328,7 @@ export class ArticlesService implements OnModuleInit {
             should: [
               {
                 multi_match: {
-                  query: getSearchTerms(lemmatizedSearchTerm.replace(',', ' '))
-                    .slice(1)
-                    .join(' '),
+                  query: lemmatizedSearchTerm,
                   fields: searchFieldsPass,
                 },
               },
