@@ -380,10 +380,6 @@ export class CasesService implements OnModuleInit {
         'reasoning_lemma',
         'headnotes',
         'headnotes_lemma',
-        'judgment.keyword',
-        'facts.keyword',
-        'reasoning.keyword',
-        'headnotes.keyword',
         'name.keyword',
       );
     } else if (searchFieldsPass.length > 0) {
@@ -514,14 +510,25 @@ export class CasesService implements OnModuleInit {
               {
                 multi_match: {
                   query: updatedSearchTerm.trim(),
-                  fields: searchFieldsPass,
-                  type: 'bool_prefix',
+                  fields: ['judgment', 'headnotes'],
+                  type: 'bool_prefix', // For partial matches in these fields
+                },
+              },
+              {
+                match_phrase: {
+                  reasoning: updatedSearchTerm.trim(), // Exact phrase match for reasoning
+                },
+              },
+              {
+                match_phrase: {
+                  facts: updatedSearchTerm.trim(), // Exact phrase match for headnotes
                 },
               },
             ],
           },
         },
       };
+
       const exactMatchResults = await this.elasticsearchService.search({
         index: 'cases',
         body: exactMatchQuery,
@@ -533,6 +540,9 @@ export class CasesService implements OnModuleInit {
       this.logger.log(
         `Exact match hits: ${JSON.stringify(exactMatchHits.length)}`,
       );
+      exactMatchHits.forEach((hit) => {
+        this.logger.log(hit['caseName']);
+      });
       let combinedResults = [];
       if (isFiltersEmpty) {
         if (updatedSearchTerm.split(' ').length > 3) {
