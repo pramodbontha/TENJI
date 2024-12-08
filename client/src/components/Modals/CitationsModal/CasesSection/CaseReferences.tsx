@@ -1,4 +1,4 @@
-import { ReferenceCard } from "@/components";
+import { ReferenceCard, ReferenceModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useLazyGetReferencesWithGivenCaseQuery } from "@/services/CitationsApi";
 import { setCaseReferences } from "@/slices/ReferenceSlice";
@@ -20,6 +20,8 @@ const CaseReferences = (props: CaseReferenceProps) => {
   const [pageSize, setPageSize] = useState<number>(10);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
+  const [selectedReference, setSelectedReference] = useState({} as Reference);
 
   const [getReferencesWithCase] = useLazyGetReferencesWithGivenCaseQuery();
 
@@ -70,6 +72,11 @@ const CaseReferences = (props: CaseReferenceProps) => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const openReferenceModal = (reference: Reference) => {
+    setSelectedReference(reference);
+    setIsReferenceModalOpen(true);
   };
 
   useEffect(() => {
@@ -132,11 +139,19 @@ const CaseReferences = (props: CaseReferenceProps) => {
                 <ReferenceCard
                   reference={reference}
                   openBookModal={openBookModal}
+                  openReferenceModal={() => openReferenceModal(reference)}
                 />
               </Col>
             ))}
         </Row>
       </div>
+      {isReferenceModalOpen && (
+        <ReferenceModal
+          reference={selectedReference}
+          isOpen={isReferenceModalOpen}
+          onClose={() => setIsReferenceModalOpen(false)}
+        />
+      )}
     </>
   );
 };

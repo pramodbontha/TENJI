@@ -79,8 +79,6 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.prod
-    volumes:
-      - dist:/app/dist
     depends_on: 
       - api
     networks:
@@ -93,7 +91,6 @@ services:
       - "80:80"
     volumes:
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - dist:/usr/share/nginx/html
     depends_on:
       - api
       - client
@@ -110,4 +107,3 @@ volumes:
   neo4j_import:
   neo4j_plugins:
   esdata:
-  dist:

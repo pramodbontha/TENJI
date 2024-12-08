@@ -11,3 +11,18 @@ RUN npm install
 COPY . .
 
 RUN npm run build
+
+# Stage 2: Serve the Vite build using Nginx
+FROM nginx:alpine
+
+# Copy the build output from the builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Custom Nginx configuration for Vite
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80 for the server
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
