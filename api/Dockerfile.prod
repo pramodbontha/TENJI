@@ -4,7 +4,6 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-RUN npm install -g @nestjs/cli
 
 # Install dependencies
 COPY package*.json ./
@@ -14,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Build the NestJS application
-RUN npm run build
+RUN npm install --only=production && npm cache clean --force
 
 # Stage 2: Set up the production environment
 FROM node:20-alpine AS production
@@ -34,4 +33,4 @@ COPY package.json .
 EXPOSE 3000
 
 # Command to start the application
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main.js"]
