@@ -98,6 +98,8 @@ services:
     stdin_open: true # Enable interactive terminal
     tty: true # Allocate a TTY
     restart: "no" # Don't restart the container automatically
+    networks:
+      - tenji
 
   nginx:
     image: nginx:latest
