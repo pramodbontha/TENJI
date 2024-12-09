@@ -88,19 +88,6 @@ services:
     networks:
       - tenji
 
-  lumi:
-    image: lumi_updated # Use the preloaded lumi image
-    container_name: lumi-app
-    expose:
-      - "3001" # Expose the container's port 3001 for Nginx
-    ports:
-      - "3001:3001" # Optional, for direct access during debugging
-    stdin_open: true # Enable interactive terminal
-    tty: true # Allocate a TTY
-    restart: "no" # Don't restart the container automatically
-    networks:
-      - tenji
-
   nginx:
     image: nginx:latest
     container_name: nginx
