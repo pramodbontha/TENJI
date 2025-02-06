@@ -1,0 +1,30 @@
+Load all data at once:
+
+1) Open a terminal in the project folder "HU_HONto" (it is important to do this and to stay here for the scripts to run properly)
+
+2) Make sure you followed the steps of the install_neo4j documentation, such that neo4j is running
+
+3) python ./load_all_data.py
+
+4) Explore the data in your neo4j browser using the cypher query language, e.g. http://localhost:7474/browser/
+
+
+OR run the scripts step by step:
+
+1) Open a terminal in the project folder "HU_HONto" (it is important to do this and to stay here for the scripts to run properly)
+
+2) Make sure you followed the steps of the install_neo4j documentation, such that neo4j is running
+
+3) python ./scripts/load_gg.py 
+
+4) python ./scripts/load_bverfge.py 
+
+Step 4) may take a while (estimate: 30 min).
+
+5) python ./scripts/load_names.py 
+
+6) python ./scripts/load_textbooks.py 
+
+Steps 4) and 6) may take a while because many attribute comparisons are performed and potential relationships are created.
+
+7) Explore the data in your neo4j browser using the cypher query language, e.g. http://localhost:7474/browser/

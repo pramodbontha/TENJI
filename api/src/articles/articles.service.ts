@@ -367,8 +367,8 @@ export class ArticlesService implements OnModuleInit {
       const nameMatchHits = nameMatchResults.hits.hits
         .map((hit) => hit._source)
         .sort((a, b) => {
-          const aHasName = a['caseName'] ? 1 : 0;
-          const bHasName = b['caseName'] ? 1 : 0;
+          const aHasName = a['name'] ? 1 : 0;
+          const bHasName = b['name'] ? 1 : 0;
           return bHasName - aHasName;
         });
       const textMatchHits = textMatchResults.hits.hits.map(
@@ -385,8 +385,8 @@ export class ArticlesService implements OnModuleInit {
       const generalMatchHits = generalMatchResults.hits.hits
         .map((hit) => hit._source)
         .sort((a, b) => {
-          const aHasName = a['caseName'] ? 1 : 0;
-          const bHasName = b['caseName'] ? 1 : 0;
+          const aHasName = a['name'] ? 1 : 0;
+          const bHasName = b['name'] ? 1 : 0;
           return bHasName - aHasName;
         });
 
