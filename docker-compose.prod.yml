@@ -4,6 +4,7 @@ services:
   neo4j:
     image: neo4j:latest
     container_name: neo4j
+    restart: always
     ports:
       - "7474:7474" # HTTP access
       - "7687:7687" # Bolt protocol access
@@ -29,6 +30,7 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
@@ -43,6 +45,7 @@ services:
 
   api:
     container_name: api
+    restart: always
     build:
       context: ./api
       dockerfile: Dockerfile.prod
@@ -80,6 +83,7 @@ services:
 
   client:
     container_name: client
+    restart: always
     build:
       context: ./client
       dockerfile: Dockerfile.prod
@@ -91,6 +95,7 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
+    restart: always
     ports:
       - "80:80"
     volumes:
