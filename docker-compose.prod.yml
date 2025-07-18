@@ -5,9 +5,9 @@ services:
     image: neo4j:latest
     container_name: neo4j
     restart: always
-    ports:
-      - "7474:7474" # HTTP access
-      - "7687:7687" # Bolt protocol access
+    expose:
+      - "7474" # Exposing port 7474 internally for Neo4j Browser
+      - "7687" # Exposing port 7687 internally for Neo4j Bolt
     environment:
       - NEO4J_AUTH=${NEO4J_AUTH} # Set the default password for the Neo4j database
     volumes:
@@ -35,9 +35,9 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+    expose:
+      - "9200" # Exposing port 9200 internally
+      - "9300" # Exposing port 9300 internally
     volumes:
       - esdata:/usr/share/elasticsearch/data
     networks:
@@ -49,8 +49,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile.prod
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000" # Exposing port 3000 internally
     depends_on:
       neo4j:
         condition: service_healthy
@@ -72,8 +72,8 @@ services:
     build:
       context: ./lemmatizer-app # Path to the lemmatizer Dockerfile
     container_name: lemmatizer
-    ports:
-      - "5000:5000" # Exposing port 5000
+    expose:
+      - "5000" # Exposing port 5000 internally
     depends_on:
       neo4j:
         condition: service_healthy
