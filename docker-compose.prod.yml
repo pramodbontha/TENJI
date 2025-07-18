@@ -35,9 +35,9 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=false
-    expose:
-      - "9200" # Exposing port 9200 internally
-      - "9300" # Exposing port 9300 internally
+    ports:
+      - "9200:9200"
+      - "9300:9300"
     volumes:
       - esdata:/usr/share/elasticsearch/data
     networks:
@@ -72,8 +72,8 @@ services:
     build:
       context: ./lemmatizer-app # Path to the lemmatizer Dockerfile
     container_name: lemmatizer
-    expose:
-      - "5000" # Exposing port 5000 internally
+    ports:
+      - "5000:5000" # Exposing port 5000
     depends_on:
       neo4j:
         condition: service_healthy
