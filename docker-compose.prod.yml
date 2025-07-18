@@ -5,9 +5,9 @@ services:
     image: neo4j:latest
     container_name: neo4j
     restart: always
-    expose:
-      - "7474" # Exposing port 7474 internally for Neo4j Browser
-      - "7687" # Exposing port 7687 internally for Neo4j Bolt
+    ports:
+      - "7474:7474" # HTTP access
+      - "7687:7687" # Bolt protocol access
     environment:
       - NEO4J_AUTH=${NEO4J_AUTH} # Set the default password for the Neo4j database
     volumes:
