@@ -49,8 +49,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile.prod
-    expose:
-      - "3000" # Exposing port 3000 internally
+    ports:
+      - "3000:3000"
     depends_on:
       neo4j:
         condition: service_healthy
